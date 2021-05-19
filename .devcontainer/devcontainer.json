@@ -1,0 +1,26 @@
+{
+	"name": "UdacityMapPlanner",
+	"dockerFile": "Dockerfile",
+	"terminal.integrated.shell.linux": "/bin/bash",
+	"updateRemoteUserUID": true,
+	"runArgs": [
+		"-e",
+		"DISPLAY=${env:DISPLAY}",
+		"-v",
+		"/tmp/.X11-unix:/tmp/.X11-unix",
+		"-v",
+		"${env:XAUTHORITY}:/root/.Xauthority",
+		"--privileged",
+		"--shm-size=2g",
+		"--name=udacity",
+		"--network=host"
+	],
+	"extensions": [
+		"llvm-vs-code-extensions.vscode-clangd",
+		"vadimcn.vscode-lldb",
+		"xaver.clang-format",
+		"ms-vscode.cpptools",
+		"notskm.clang-tidy",
+		"austin.code-gnu-global",
+	],
+}
