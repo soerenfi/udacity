@@ -5,6 +5,7 @@ RUN apt-get update && apt-get upgrade -y
 
 
 RUN apt-get install -y build-essential \
+  gdb \
   libcairo2-dev \
   libgraphicsmagick1-dev \
   libpng-dev \
@@ -29,6 +30,6 @@ RUN git clone --recurse-submodules https://github.com/cpp-io2d/P0267_RefImpl && 
   mkdir Debug && \
   cd Debug && \
   cmake -DCMAKE_BUILD_TYPE=Debug .. && \
-  cmake --build . && \
+  make -j && \
   make install
 
