@@ -22,8 +22,7 @@ vector<Process>& System::Processes() {
   processes_.clear();
   vector<int> proc = LinuxParser::Pids();
   for (auto pid : proc) processes_.push_back(Process(pid));
-  std::sort(processes_.begin(), processes_.end(),
-            [](Process& p1, Process& p2) -> bool { return p1.CpuUtilization() > p2.CpuUtilization(); });
+  std::sort(processes_.begin(), processes_.end());
   return processes_;
 }
 

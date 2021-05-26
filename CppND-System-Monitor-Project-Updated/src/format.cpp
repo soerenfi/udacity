@@ -1,18 +1,22 @@
-#include "format.h"
+#include <ctime>
+#include <iomanip>
+
 #include <sstream>
 #include <string>
+
+#include "format.h"
 
 using std::string;
 
 // TODO: Complete this helper function
 // INPUT: Long int measuring seconds
 // OUTPUT: HH:MM:SS
-// REMOVE: [[maybe_unused]] once you define the function
 string Format::ElapsedTime(long seconds) {
-  int hh = seconds / 3600;
-  int mm = seconds / 60 - (hh * 60);
-  int ss = seconds - (hh * 3600) - (mm * 60);
-  std::stringstream stream;
-  stream << hh << ":" << mm << ":" << ss;
-  return stream.str();
+  std::tm timestamp{};
+  timestamp.tm_hour = seconds / 3600;
+  timestamp.tm_min = seconds / 60 - (timestamp.tm_hour * 60);
+  timestamp.tm_sec = seconds - (timestamp.tm_hour * 3600) - (timestamp.tm_min * 60);
+  std::stringstream ss;
+  ss << std::put_time(&timestamp, "%H:%M:%S");
+  return ss.str();
 }
