@@ -23,8 +23,7 @@ std::string NCursesDisplay::ProgressBar(float percent) {
   }
 
   string display{to_string(percent * 100).substr(0, 4)};
-  if (percent < 0.1 || percent == 1.0)
-    display = " " + to_string(percent * 100).substr(0, 3);
+  if (percent < 0.1 || percent == 1.0) display = " " + to_string(percent * 100).substr(0, 3);
   return result + " " + display + "/100%";
 }
 
@@ -42,18 +41,13 @@ void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
   mvwprintw(window, row, 10, "");
   wprintw(window, ProgressBar(system.MemoryUtilization()).c_str());
   wattroff(window, COLOR_PAIR(1));
-  mvwprintw(window, ++row, 2,
-            ("Total Processes: " + to_string(system.TotalProcesses())).c_str());
-  mvwprintw(
-      window, ++row, 2,
-      ("Running Processes: " + to_string(system.RunningProcesses())).c_str());
-  mvwprintw(window, ++row, 2,
-            ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
+  mvwprintw(window, ++row, 2, ("Total Processes: " + to_string(system.TotalProcesses())).c_str());
+  mvwprintw(window, ++row, 2, ("Running Processes: " + to_string(system.RunningProcesses())).c_str());
+  mvwprintw(window, ++row, 2, ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
   wrefresh(window);
 }
 
-void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
-                                      WINDOW* window, int n) {
+void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes, WINDOW* window, int n) {
   int row{0};
   int const pid_column{2};
   int const user_column{9};
@@ -76,10 +70,8 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
     float cpu = processes[i].CpuUtilization() * 100;
     mvwprintw(window, row, cpu_column, to_string(cpu).substr(0, 4).c_str());
     mvwprintw(window, row, ram_column, processes[i].Ram().c_str());
-    mvwprintw(window, row, time_column,
-              Format::ElapsedTime(processes[i].UpTime()).c_str());
-    mvwprintw(window, row, command_column,
-              processes[i].Command().substr(0, window->_maxx - 46).c_str());
+    mvwprintw(window, row, time_column, Format::ElapsedTime(processes[i].UpTime()).c_str());
+    mvwprintw(window, row, command_column, processes[i].Command().substr(0, window->_maxx - 46).c_str());
   }
 }
 
@@ -91,8 +83,7 @@ void NCursesDisplay::Display(System& system, int n) {
 
   int x_max{getmaxx(stdscr)};
   WINDOW* system_window = newwin(9, x_max - 1, 0, 0);
-  WINDOW* process_window =
-      newwin(3 + n, x_max - 1, system_window->_maxy + 1, 0);
+  WINDOW* process_window = newwin(3 + n, x_max - 1, system_window->_maxy + 1, 0);
 
   while (1) {
     init_pair(1, COLOR_BLUE, COLOR_BLACK);

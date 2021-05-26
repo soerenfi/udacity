@@ -1,6 +1,7 @@
 #include <curses.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <iostream>
 #include <string>
 #include <vector>
 #include "linux_parser.h"
@@ -113,20 +114,29 @@ long LinuxParser::UpTime() {
 }
 
 // TODO: Read and return the number of jiffies for the system
-long LinuxParser::Jiffies() { return 0; }
+long LinuxParser::Jiffies() { return LinuxParser::ActiveJiffies() + LinuxParser::IdleJiffies(); }
 
 // TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::ActiveJiffies(int pid) {
-  std::vector<string> util = LinuxParser::CpuUtilization(pid);
-  auto user = std::stol(util.at(LinuxParser::CPUStates::kUser_));
-  auto nice = std::stol(util.at(LinuxParser::CPUStates::kNice_));
-  auto system = std::stol(util.at(LinuxParser::CPUStates::kSystem_));
-  auto irq = std::stol(util.at(LinuxParser::CPUStates::kIRQ_));
-  auto softirq = std::stol(util.at(LinuxParser::CPUStates::kSoftIRQ_));
-  auto steal = std::stol(util.at(LinuxParser::CPUStates::kSteal_));
-  return user + nice + system + irq + softirq + steal;
+  // things
+  string value;
+  std::vector<string> values;
+  string line;
+  std::ifstream stream(kProcDirectory + std::to_string(pid) + LinuxParser::kStatFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+    while (linestream >> value) values.push_back(value);
+    auto u_time = stol(values.at(kUTime_));
+    auto s_time = stol(values.at(kSTime_));
+    auto cu_time = stol(values.at(kCUTime_));
+    auto cs_time = stol(values.at(kCSTime_));
+    // https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
+    return u_time + s_time;  // + cu_time + cs_time;
+  }
+  return 0;
 }
+
 // TODO: Read and return the number of active jiffies for the system
 long LinuxParser::ActiveJiffies() {
   auto util = LinuxParser::CpuUtilization();
@@ -210,8 +220,15 @@ int LinuxParser::RunningProcesses() {
 
 // TODO: Read and return the command associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid[[maybe_unused]]) { return string(); }
-
+string LinuxParser::Command(int pid) {
+  string line;
+  std::ifstream stream(kProcDirectory + std::to_string(pid) + LinuxParser::kCmdlineFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    return line;
+  }
+  return string("cmd not found");
+}
 // TODO: Read and return the memory used by a process
 // REMOVE: [[maybe_unused]] once you define the function
 string LinuxParser::Ram(int pid) {
@@ -232,11 +249,10 @@ string LinuxParser::Ram(int pid) {
       }
     }
   }
-  return std::to_string(ram);
+  return std::to_string(ram / 1000);
 }
 
 // TODO: Read and return the user ID associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
 std::string LinuxParser::Uid(int pid) {
   string key;
   int value;
@@ -283,29 +299,16 @@ string LinuxParser::User(int pid) {
 long LinuxParser::UpTime(int pid) {
   string value;
   std::vector<string> values;
-  int uptime;
+  int uptime{0};
   string line;
   std::ifstream stream(kProcDirectory + std::to_string(pid) + LinuxParser::kStatFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
     while (linestream >> value) values.push_back(value);
-    uptime = std::stol(values.at(kStartTime));
+    uptime = std::stol(values.at(kStartTime_));
     uptime /= sysconf(_SC_CLK_TCK);
+    uptime = LinuxParser::UpTime() - uptime;
   }
-  return static_cast<long>(uptime);
-}
-
-std::vector<std::string> LinuxParser::CpuUtilization(int pid) {
-  string value;
-  std::vector<string> values;
-  int uptime;
-  string line;
-  std::ifstream stream(kProcDirectory + std::to_string(pid) + LinuxParser::kStatFilename);
-  if (stream.is_open()) {
-    std::getline(stream, line);
-    std::istringstream linestream(line);
-    while (linestream >> value) values.push_back(value);
-  }
-  return values;
+  return uptime;
 }

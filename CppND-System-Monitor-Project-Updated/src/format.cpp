@@ -1,6 +1,6 @@
+#include "format.h"
 #include <sstream>
 #include <string>
-#include "format.h"
 
 using std::string;
 
