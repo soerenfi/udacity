@@ -22,6 +22,8 @@ class System {
  private:
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};
+  long idle_last_{0};
+  long active_last_{0};
 };
 
 #endif

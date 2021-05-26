@@ -28,7 +28,7 @@ std::string OperatingSystem();
 std::string Kernel();
 
 // CPU
-enum CPUStates {
+enum CPUStates : int {
   kUser_ = 0,
   kNice_,
   kSystem_,
@@ -40,7 +40,18 @@ enum CPUStates {
   kGuest_,
   kGuestNice_
 };
+
+// for /proc/[pid]/stat
+// https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
+
+const int kUTime{14};      // namespace LinuxParser
+const int kSTime{15};      // CPU time spent in kernel code, measured in clock ticks
+const int kCUTime{16};     // Waited - for children's CPU time spent in user code (in clock ticks)
+const int kCSTime{17};     // Waited - for children's CPU time spent in kernel code (in clock ticks)
+const int kStartTime{22};  // Time when the process started, measured in clock ticks
+
 std::vector<std::string> CpuUtilization();
+std::vector<std::string> CpuUtilization(int pid);
 long Jiffies();
 long ActiveJiffies();
 long ActiveJiffies(int pid);
