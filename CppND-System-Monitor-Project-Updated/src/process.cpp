@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <cctype>
+#include <exception>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ using std::vector;
 int Process::Pid() { return pid_; }
 
 // TODO: Return this process's CPU utilization
-float Process::CpuUtilization() {
+void Process::CalcCpuUtilization() {
   auto active = LinuxParser::ActiveJiffies(pid_);
   auto uptime = LinuxParser::UpTime();              // uptime of the system (seconds)
   auto uptime_process = LinuxParser::UpTime(pid_);  // uptime of process in seconds
@@ -28,17 +29,21 @@ float Process::CpuUtilization() {
   uptime_last_ = uptime;
   uptime_process_last_ = uptime_process;
 
-  return (float)active / sysconf(_SC_CLK_TCK) / uptime_process;
+  cpu_utilization_ = (float)active / sysconf(_SC_CLK_TCK) / uptime_process;
 }
+float Process::CpuUtilization() const { return cpu_utilization_; }
 
 // TODO: Return the command that generated this process
 string Process::Command() { return LinuxParser::Command(pid_); }
 
 // TODO: Return this process's memory utilization
-string Process::Ram() { return LinuxParser::Ram(pid_); }
+string Process::Ram() {
+  auto ram = stol(LinuxParser::Ram(pid_));
+  return std::to_string(ram / 1000);
+}
 
 // TODO: Return the user (name) that generated this process
-string Process::User() { return LinuxParser::Uid(pid_); }
+string Process::User() { return LinuxParser::User(pid_); }
 
 // TODO: Return the age of this process (in seconds)
 long int Process::UpTime() { LinuxParser::UpTime(pid_); }
