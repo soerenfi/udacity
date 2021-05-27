@@ -27,7 +27,6 @@ float Processor::Utilization() {
   long total = idle + active;
 
   long d_idle = idle - idle_last_;
-  long d_active = active - active_last_;
   long d_total = total - total_last_;
 
   // store current state as last

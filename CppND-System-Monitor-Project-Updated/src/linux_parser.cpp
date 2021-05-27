@@ -74,7 +74,7 @@ float LinuxParser::MemoryUtilization() {
   string key, unit;
   int value;
   string line;
-  int mem_total, mem_free, mem_available, buffers;
+  int mem_total, mem_free;
   std::ifstream stream(kProcDirectory + LinuxParser::kMeminfoFilename);
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
@@ -86,12 +86,6 @@ float LinuxParser::MemoryUtilization() {
         }
         if (key == "MemFree") {
           mem_free = value;
-        }
-        if (key == "MemAvailable") {
-          mem_available = value;
-        }
-        if (key == "Buffers") {
-          buffers = value;
         }
       }
     }
@@ -129,8 +123,8 @@ long LinuxParser::ActiveJiffies(int pid) {
     while (linestream >> value) values.push_back(value);
     auto u_time = stol(values.at(kUTime_));
     auto s_time = stol(values.at(kSTime_));
-    auto cu_time = stol(values.at(kCUTime_));
-    auto cs_time = stol(values.at(kCSTime_));
+    // auto cu_time = stol(values.at(kCUTime_));
+    // auto cs_time = stol(values.at(kCSTime_));
     // https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
     return u_time + s_time;  // + cu_time + cs_time;
   }
@@ -176,50 +170,42 @@ int LinuxParser::TotalProcesses() {
   string key;
   int value;
   string line;
-  int processes, procs_running;
   std::ifstream stream(kProcDirectory + LinuxParser::kStatFilename);
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
         if (key == "processes") {
-          processes = value;
+			return value;
         }
-        if (key == "procs_running") {
-          procs_running = value;
-        }
+        
       }
     }
   }
-  return processes;
+  return 0;
 }
 
-// TODO: do not repeat yourself
+// TODO: repeated parsing of same file
 // TODO: Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
   string key;
   int value;
   string line;
-  int processes, procs_running;
   std::ifstream stream(kProcDirectory + LinuxParser::kStatFilename);
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
-        if (key == "processes") {
-          processes = value;
-        }
         if (key == "procs_running") {
-          procs_running = value;
+          return value;
         }
       }
     }
   }
-  return procs_running;
+  return 0;
 }
 
 // TODO: Read and return the command associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
 string LinuxParser::Command(int pid) {
   string line;
   std::ifstream stream(kProcDirectory + std::to_string(pid) + LinuxParser::kCmdlineFilename);
