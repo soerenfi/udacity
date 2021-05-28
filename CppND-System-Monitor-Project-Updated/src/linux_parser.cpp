@@ -41,7 +41,7 @@ string LinuxParser::OperatingSystem() {
 string LinuxParser::Kernel() {
   string os;
   string version;
-  string kernel;
+  string kernel{"null"};
   string line;
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
@@ -69,10 +69,12 @@ vector<int> LinuxParser::Pids() {
 }
 
 float LinuxParser::MemoryUtilization() {
-  string key, unit;
+  string key;
+  string unit;
   int value;
   string line;
-  int mem_total, mem_free;
+  int mem_total{0};
+  int mem_free{0};
   std::ifstream stream(kProcDirectory + LinuxParser::kMeminfoFilename);
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
@@ -271,7 +273,7 @@ string LinuxParser::User(int pid) {
   }
   stream.close();
 
-  return std::string("not found");
+  return std::to_string(pid);
 }
 
 long LinuxParser::UpTime(int pid) {

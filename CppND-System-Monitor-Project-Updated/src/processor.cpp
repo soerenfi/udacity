@@ -1,9 +1,8 @@
-#include "processor.h"
 #include <iostream>
 #include <string>
 #include "linux_parser.h"
+#include "processor.h"
 
-// TODO: Return the aggregate CPU utilization
 float Processor::Utilization() {
   // https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
   // PrevIdle = previdle + previowait
