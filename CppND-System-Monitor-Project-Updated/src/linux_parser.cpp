@@ -116,21 +116,22 @@ long LinuxParser::ActiveJiffies(int pid) {
   string value;
   std::vector<string> values;
   string line;
+  long u_time{0};
+  long s_time{0};
   std::ifstream stream(kProcDirectory + std::to_string(pid) + LinuxParser::kStatFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
     while (linestream >> value) values.push_back(value);
-    auto u_time = stol(values.at(kUTime_));
-    auto s_time = stol(values.at(kSTime_));
-    auto cu_time = stol(values.at(kCUTime_));
-    auto cs_time = stol(values.at(kCSTime_));
+    u_time = stol(values.at(kUTime_));
+    s_time = stol(values.at(kSTime_));
+    // auto cu_time = stol(values.at(kCUTime_));
+    // auto cs_time = stol(values.at(kCSTime_));
     // https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
-    return u_time + s_time + cu_time + cs_time;
   }
   stream.close();
 
-  return 0;
+  return u_time + s_time;  // + cu_time + cs_time;
 }
 
 long LinuxParser::ActiveJiffies() {

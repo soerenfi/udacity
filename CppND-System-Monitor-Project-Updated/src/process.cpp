@@ -25,9 +25,9 @@ void Process::CalcCpuUtilization() {
   uptime_last_ = uptime;
   uptime_process_last_ = uptime_process;
 
-  cpu_utilization_ = (float)d_active / sysconf(_SC_CLK_TCK) / d_uptime_process;
+  cpu_utilization_ = (double)d_active / sysconf(_SC_CLK_TCK) / d_uptime_process;
 }
-float Process::CpuUtilization() const { return cpu_utilization_; }
+double Process::CpuUtilization() const { return cpu_utilization_; }
 
 string Process::Command() { return LinuxParser::Command(pid_); }
 
