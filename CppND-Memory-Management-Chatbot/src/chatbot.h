@@ -47,6 +47,4 @@ class ChatBot {
     void ReceiveMessageFromUser(std::string message);
 };
 
-// ChatBot& operator=(const ChatBot& other);
-
 #endif /* CHATBOT_H_ */

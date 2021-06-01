@@ -49,7 +49,8 @@ class GraphNode {
     //// STUDENT CODE
     ////
 
-    void MoveChatbotHere(ChatBot&& chatbot);
+    // void MoveChatbotHere(ChatBot&& chatbot);
+    void MoveChatbotHere(ChatBot chatbot);
 
     ////
     //// EOF STUDENT CODE

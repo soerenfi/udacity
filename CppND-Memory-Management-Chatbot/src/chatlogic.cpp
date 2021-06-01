@@ -15,12 +15,6 @@ ChatLogic::ChatLogic() {
     //// STUDENT CODE
     ////
 
-    // create instance of chatbot
-    //_chatBot = new ChatBot("../images/chatbot.png");
-
-    // add pointer to chatlogic so that chatbot answers can be passed on to the GUI
-    // _chatBot->SetChatLogicHandle(this);
-
     ////
     //// EOF STUDENT CODE
 }
@@ -28,19 +22,6 @@ ChatLogic::ChatLogic() {
 ChatLogic::~ChatLogic() {
     //// STUDENT CODE
     ////
-
-    // delete chatbot instance
-    // delete _chatBot;
-
-    // // delete all nodes
-    // for (auto it = std::begin(_nodes); it != std::end(_nodes); ++it) {
-    //     delete *it;
-    // }
-
-    // delete all edges
-    // for (auto it = std::begin(_edges); it != std::end(_edges); ++it) {
-    //     delete *it;
-    // }
 
     ////
     //// EOF STUDENT CODE
@@ -118,7 +99,7 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename) {
                         auto newNode =
                             std::find_if(_nodes.begin(), _nodes.end(), [&id](std::unique_ptr<GraphNode>& node) {
                                 return node->GetID() == id;
-                            });  // is this correct? any way to pass raw/weak ptr to lambda?
+                            });  // is this correct? any way to pass raw ptr to lambda?
 
                         // create new element if ID does not yet exist
                         if (newNode == _nodes.end()) {
@@ -151,7 +132,7 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename) {
                             auto parentNode = std::find_if(
                                 _nodes.begin(), _nodes.end(),
                                 [&parentToken](std::unique_ptr<GraphNode>&
-                                                   node) {  // is this correct? any way to pass raw/weak ptr to lambda?
+                                                   node) {  // is this correct? any way to pass raw ptr to lambda?
                                     return node->GetID() == std::stoi(parentToken->second);
                                 });
                             auto childNode = std::find_if(
@@ -169,7 +150,6 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename) {
                             AddAllTokensToElement("KEYWORD", tokens, *edge);
 
                             // store reference in child node and parent node
-                            std::cout << "added edge " << edge.get() << " to child node " << std::endl;
                             (*childNode)->AddEdgeToParentNode(edge.get());
                             (*parentNode)->AddEdgeToChildNode(std::move(edge));
                         }
@@ -214,7 +194,7 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename) {
     _chatBot = &chatBot;
     _chatBot->SetChatLogicHandle(this);
 
-    rootNode->MoveChatbotHere(std::move(chatBot));
+    rootNode->MoveChatbotHere(chatBot);
 
     ////
     //// EOF STUDENT CODE
