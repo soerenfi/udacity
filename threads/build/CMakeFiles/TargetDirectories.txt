@@ -1,0 +1,3 @@
+/lhome/sofinde/udacity/threads/build/CMakeFiles/rebuild_cache.dir
+/lhome/sofinde/udacity/threads/build/CMakeFiles/threads.dir
+/lhome/sofinde/udacity/threads/build/CMakeFiles/edit_cache.dir

@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/lhome/sofinde/udacity/threads/src/threads.cpp
+algorithm
+-
+future
+-
+iostream
+-
+mutex
+-
+thread
+-
+vector
+-
+

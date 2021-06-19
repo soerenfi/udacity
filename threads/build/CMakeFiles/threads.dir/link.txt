@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/threads.dir/src/threads.cpp.o  -o threads  -lpthread 
