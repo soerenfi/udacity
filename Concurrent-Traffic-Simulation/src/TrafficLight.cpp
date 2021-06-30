@@ -13,6 +13,7 @@ T MessageQueue<T>::receive() {
     // to wait for and receive new messages and pull them from the queue using move semantics.
     // The received object should then be returned by the receive function.
     std::unique_lock<std::mutex> lock(_mutex);
+
     // wait for a new message in queue
     _condVar.wait(lock, [this] { return !_queue.empty(); });
 
@@ -33,17 +34,14 @@ void MessageQueue<T>::send(T&& msg) {
 
 /* Implementation of class "TrafficLight" */
 
-TrafficLight::TrafficLight(int id) : _id(id), _queue(id) { _currentPhase = TrafficLightPhase::red; }
+TrafficLight::TrafficLight() { _currentPhase = TrafficLightPhase::red; }
 
 void TrafficLight::waitForGreen() {
     // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop
     // runs and repeatedly calls the receive function on the message queue.
     // Once it receives TrafficLightPhase::green, the method returns.
     while (true) {
-        auto phase = _queue.receive();
-        if (phase == TrafficLightPhase::green) {
-            std::cout << "received " << (phase == TrafficLightPhase::green ? "green" : "red") << " on " << _id
-                      << std::endl;
+        if (_queue.receive() == TrafficLightPhase::green) {
             return;
         }
     }

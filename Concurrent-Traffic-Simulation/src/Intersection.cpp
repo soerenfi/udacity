@@ -41,11 +41,9 @@ void WaitingVehicles::permitEntryToFirstInQueue() {
 
 /* Implementation of class "Intersection" */
 
-Intersection::Intersection() : _trafficLight(_id) {
+Intersection::Intersection() {
     _type = ObjectType::objectIntersection;
     _isBlocked = false;
-
-    _trafficLight._id = _id;
 }
 
 void Intersection::addStreet(std::shared_ptr<Street> street) { _streets.push_back(street); }
@@ -80,15 +78,12 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle) {
     lck.lock();
     std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " is granted entry." << std::endl;
 
+    lck.unlock();
     // b : use the methods TrafficLight::getCurrentPhase and TrafficLight::waitForGreen to block the execution until
     // the traffic light turns green.
-    lck.unlock();
 
     if (_trafficLight.getCurrentPhase() == TrafficLightPhase::red) {
-        std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " is waiting for green"
-                  << std::endl;
         _trafficLight.waitForGreen();
-        std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " got green light " << std::endl;
     }
 }
 

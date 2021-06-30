@@ -18,11 +18,8 @@ class Vehicle;
 template <class T>
 class MessageQueue {
    public:
-    MessageQueue(int id) : _id(id){};
     void send(T&& msg);
     T receive();
-
-    int _id{7};
 
    private:
     std::deque<T> _queue;
@@ -44,7 +41,7 @@ enum TrafficLightPhase : uint8_t {
 class TrafficLight : public TrafficObject {
    public:
     // constructor / desctructor
-    TrafficLight(int id);
+    TrafficLight();
     ~TrafficLight() = default;
     TrafficLight(const TrafficLight& other) = delete;
     TrafficLight(TrafficLight&& other) = delete;
@@ -56,8 +53,6 @@ class TrafficLight : public TrafficObject {
     // typical behaviour methods
     void waitForGreen();
     void simulate();
-
-    int _id{0};
 
    private:
     // typical behaviour methods

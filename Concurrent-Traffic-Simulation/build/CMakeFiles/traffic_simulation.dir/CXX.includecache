@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/lhome/sofinde/udacity/Concurrent-Traffic-Simulation/src/TrafficLight.cpp
+chrono
+-
+iostream
+-
+random
+-
+thread
+-
+TrafficLight.h
+/lhome/sofinde/udacity/Concurrent-Traffic-Simulation/src/TrafficLight.h
+
+/lhome/sofinde/udacity/Concurrent-Traffic-Simulation/src/TrafficLight.h
+condition_variable
+-
+deque
+-
+mutex
+-
+TrafficObject.h
+/lhome/sofinde/udacity/Concurrent-Traffic-Simulation/src/TrafficObject.h
+
+/lhome/sofinde/udacity/Concurrent-Traffic-Simulation/src/TrafficObject.h
+vector
+-
+thread
+-
+mutex
+-
+

@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../raylib/src/raylib.h
+stdarg.h
+-
+stdbool.h
+-
+
+/lhome/sofinde/udacity/raylib/main.cpp
+raylib.h
+/lhome/sofinde/udacity/raylib/raylib.h
+cstdlib
+-
+vector
+-
+glm/glm.hpp
+-
+
