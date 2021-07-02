@@ -25,9 +25,12 @@ add_subdirectory(thirdparty/io2d)
 # Add project executable
 add_executable(${PROJECT_NAME}
  src/main.cpp
-src/map.cpp
-src/graphics.cpp
-src/graphics_raylib.cpp)
+src/tsim_map.cpp
+src/tsim_object.cpp
+src/opendrive_parser.cpp
+src/tsim_graphics.cpp
+#src/graphics_raylib.cpp
+)
 
 # Add project executable
 

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libio2d_core.a  CMakeFiles/io2d_core.dir/rgba_color.cpp.o CMakeFiles/io2d_core.dir/xinterchangebuffer.cpp.o
-/usr/bin/ranlib libio2d_core.a

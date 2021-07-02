@@ -1,2 +1,0 @@
-/usr/bin/ar qc libio2d_cairo_xlib.a  CMakeFiles/io2d_cairo_xlib.dir/cairo_renderer_xlib.cpp.o
-/usr/bin/ranlib libio2d_cairo_xlib.a
