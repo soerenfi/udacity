@@ -8,7 +8,7 @@
 using namespace tsim;
 namespace parser {
 
-OpenDriveParser::OpenDriveParser(std::string filename) {
+std::shared_ptr<Map> OpenDriveParser::parse(std::string filename) {
     tinyxml2::XMLError eResult = xml_doc_.LoadFile(filename.c_str());
     if (eResult != tinyxml2::XML_SUCCESS) {
         if (eResult == tinyxml2::XML_ERROR_FILE_NOT_FOUND) {
@@ -23,8 +23,52 @@ OpenDriveParser::OpenDriveParser(std::string filename) {
     parseHeader();
     parseRoads();
     parseJunctions();
+    parseLanes();
+    return map_builder_.getMap();
 }
-void OpenDriveParser::calculateRoadPoints(const tinyxml2::XMLElement* odr_road, Road& road) {
+void OpenDriveParser::parseHeader() {
+    auto odr = xml_doc_.FirstChildElement("OpenDRIVE");
+    auto rev_major = odr->FirstChildElement("header")->UnsignedAttribute("revMajor");
+    auto rev_minor = odr->FirstChildElement("header")->UnsignedAttribute("revMinor");
+}
+
+void OpenDriveParser::parseRoads() {
+    auto odr = xml_doc_.FirstChildElement("OpenDRIVE");
+
+    for (auto* odrRoad = odr->FirstChildElement("road"); odrRoad != nullptr;
+         odrRoad = odrRoad->NextSiblingElement("road")) {
+        auto road = map_builder_.addRoad(odrRoad->UnsignedAttribute("id"));
+
+        auto predecessor = odrRoad->FirstChildElement("link")->FirstChildElement("predecessor");
+        if (predecessor) {
+            if (!strcmp(predecessor->Attribute("elementType"), "road")) {
+                map_builder_.road_setPredecessor(
+                    road.get(), predecessor->UnsignedAttribute("elementId"),
+                    contactPointToDrivingDirection(predecessor->Attribute("contactPoint")));
+            }
+            if (!strcmp(predecessor->Attribute("elementType"), "junction")) {
+                map_builder_.road_setPredecessor(
+                    road.get(), predecessor->UnsignedAttribute("elementId"), DrivingDirection::normal);
+            };
+        }
+        auto successor = odrRoad->FirstChildElement("link")->FirstChildElement("successor");
+        if (successor) {
+            // if not junction
+            if (!strcmp(successor->Attribute("elementType"), "road")) {
+                map_builder_.road_setSuccessor(
+                    road.get(), successor->UnsignedAttribute("elementId"),
+                    contactPointToDrivingDirection(successor->Attribute("contactPoint")));
+            }
+            if (!strcmp(successor->Attribute("elementType"), "junction")) {
+                map_builder_.road_setSuccessor(
+                    road.get(), successor->UnsignedAttribute("elementId"), DrivingDirection::normal);
+            }
+        }
+        calculateRoadPoints(road.get(), odrRoad);
+    }
+}
+
+void OpenDriveParser::calculateRoadPoints(Road* road, const tinyxml2::XMLElement* odr_road) {
     auto plan_view = odr_road->FirstChildElement("planView");
     for (auto* geom = plan_view->FirstChildElement("geometry"); geom != nullptr;
          geom = geom->NextSiblingElement("geometry")) {
@@ -39,108 +83,72 @@ void OpenDriveParser::calculateRoadPoints(const tinyxml2::XMLElement* odr_road, 
         auto arc = geom->FirstChildElement("arc");
 
         std::vector<Point> points;
-        if (arc != nullptr)
+        if (arc != nullptr) {
+            std::cout << "arc" << std::endl;
             points = calculateArc(x, y, hdg, length, arc->DoubleAttribute("curvature"));
-        else
+        } else
             points = calculateStraight(x, y, hdg, length);
-        road.addPoints(points);
+
+        // add points for this geometry to road description
+        map_builder_.road_addRoadPoints(road, points);
     }
 }
-void OpenDriveParser::parseHeader() {
-    auto odr = xml_doc_.FirstChildElement("OpenDRIVE");
-    map_.setRevMajor(odr->FirstChildElement("header")->UnsignedAttribute("revMajor"));
-    map_.setRevMinor(odr->FirstChildElement("header")->UnsignedAttribute("revMinor"));
-}
-void OpenDriveParser::parseRoads() {
-    auto odr = xml_doc_.FirstChildElement("OpenDRIVE");
-    for (auto* odrRoad = odr->FirstChildElement("road"); odrRoad != nullptr;
-         odrRoad = odrRoad->NextSiblingElement("road")) {
-        Road road(&map_);
-        auto predecessor = odrRoad->FirstChildElement("link")->FirstChildElement("predecessor");
-        if (predecessor) {
-            if (!strcmp(predecessor->Attribute("elementType"), "road")) {
-                road.setPredecessor(
-                    predecessor->UnsignedAttribute("elementId"),
-                    contactPointToDrivingDirection(predecessor->Attribute("contactPoint")));
-            }
-            if (!strcmp(predecessor->Attribute("elementType"), "junction")) {
-                road.setPredecessor(predecessor->UnsignedAttribute("elementId"), DrivingDirection::normal);
-            };
-        }
-        auto successor = odrRoad->FirstChildElement("link")->FirstChildElement("successor");
-        if (successor) {
-            // if not junction
-            if (!strcmp(successor->Attribute("elementType"), "road")) {
-                road.setSuccessor(
-                    successor->UnsignedAttribute("elementId"),
-                    contactPointToDrivingDirection(successor->Attribute("contactPoint")));
-            }
-            if (!strcmp(successor->Attribute("elementType"), "junction")) {
-                road.setSuccessor(successor->UnsignedAttribute("elementId"), DrivingDirection::normal);
-            }
-        }
-        road.setId(odrRoad->UnsignedAttribute("id"));
-
-        auto* odrLanes = odrRoad->FirstChildElement("lanes");
-        for (auto* odrLaneSection = odrLanes->FirstChildElement("laneSection"); odrLaneSection != nullptr;
-             odrLaneSection = odrLaneSection->NextSiblingElement("laneSection")) {
-            LaneSection laneSection;
-
-            auto* left = odrLaneSection->FirstChildElement("left");
-            auto* center = odrLaneSection->FirstChildElement("center");
-            auto* right = odrLaneSection->FirstChildElement("right");
-
-            if (left) parseLanes(laneSection, left);
-            // if (center) parseLanes(laneSection, center);
-            if (right) parseLanes(laneSection, right);
-            road.addLaneSection(std::move(laneSection));
-        }
-        calculateRoadPoints(odrRoad, road);
-        map_.addRoad(std::move(road));
-    }
-}
-
 void OpenDriveParser::parseJunctions() {
     auto odr = xml_doc_.FirstChildElement("OpenDRIVE");
     for (auto* odrJunction = odr->FirstChildElement("junction"); odrJunction != nullptr;
          odrJunction = odrJunction->NextSiblingElement("junction")) {
-        Junction junction(&map_);
-        junction.setId(odrJunction->UnsignedAttribute("id"));
+        auto junction = map_builder_.addJunction(odrJunction->UnsignedAttribute("id"));
+
         for (auto* odrConnection = odrJunction->FirstChildElement("connection"); odrConnection != nullptr;
              odrConnection = odrConnection->NextSiblingElement("connection")) {
-            junction.addConnection(
-                odrConnection->UnsignedAttribute("id"), odrConnection->UnsignedAttribute("incomingRoad"),
+            map_builder_.junction_addConnection(
+                junction.get(), odrConnection->UnsignedAttribute("incomingRoad"),
                 odrConnection->UnsignedAttribute("connectingRoad"),
                 contactPointToDrivingDirection(odrConnection->Attribute("contactPoint")));
         }
-        map_.addJunction(std::move(junction));
     }
 }
-void OpenDriveParser::parseLanes(LaneSection& laneSection, const tinyxml2::XMLElement* section) {
-    for (auto* odrLane = section->FirstChildElement("lane"); odrLane != nullptr;
+
+void OpenDriveParser::parseLanes() {
+    auto odr = xml_doc_.FirstChildElement("OpenDRIVE");
+    for (auto* odrRoad = odr->FirstChildElement("road"); odrRoad != nullptr;
+         odrRoad = odrRoad->NextSiblingElement("road")) {
+        auto* odrLanes = odrRoad->FirstChildElement("lanes");
+        for (auto* odrLaneSection = odrLanes->FirstChildElement("laneSection"); odrLaneSection != nullptr;
+             odrLaneSection = odrLaneSection->NextSiblingElement("laneSection")) {
+            std::shared_ptr<Road> road = map_builder_.getRoad(odrRoad->UnsignedAttribute("id"));
+            std::shared_ptr<LaneSection> lane_section =
+                map_builder_.road_addLaneSection(road.get(), odrLaneSection->DoubleAttribute("s"));
+
+            auto* group_left = odrLaneSection->FirstChildElement("left");
+            auto* group_center = odrLaneSection->FirstChildElement("center");
+            auto* group_right = odrLaneSection->FirstChildElement("right");
+
+            if (group_left) parseLaneSections(lane_section.get(), group_left, tsim::LaneGroup::left);
+            // if (group_center) parseLanes(lane_section, group_center, center);
+            if (group_right) parseLaneSections(lane_section.get(), group_right, tsim::LaneGroup::right);
+        }
+    }
+}
+void OpenDriveParser::parseLaneSections(
+    LaneSection* lane_section, const tinyxml2::XMLElement* group, tsim::LaneGroup lane_group) {
+    for (auto* odrLane = group->FirstChildElement("lane"); odrLane != nullptr;
          odrLane = odrLane->NextSiblingElement("lane")) {
         if (!strcmp(odrLane->Attribute("type"), "driving")) {
-            std::cout << "found lane" << std::endl;
-            Lane lane;
-            parseLane(lane, odrLane);
-            calculateLanePoints(lane, odrLane);
-            laneSection.addLane(std::move(lane));
+            std::shared_ptr<Lane> lane = map_builder_.laneSection_addLane(
+                lane_section, lane_group, odrLane->IntAttribute("id"),
+                odrLane->FirstChildElement("width")->DoubleAttribute("sOffset"),
+                odrLane->FirstChildElement("width")->DoubleAttribute("a"), parseLaneType(odrLane->Attribute("type")));
+            calculateLanePoints(lane.get(), odrLane);
         }
     }
 }
 
-void OpenDriveParser::parseLane(Lane& lane, const tinyxml2::XMLElement* odrLane) {
-    lane.setOffset(odrLane->FirstChildElement("width")->DoubleAttribute("sOffset"));
-    std::cout << odrLane->Attribute("id") << std::endl;
-    lane.setId(odrLane->IntAttribute("id"));                                   // TODO wrong; int converison not working
-    lane.setWidth(odrLane->FirstChildElement("width")->DoubleAttribute("a"));  // TODO add polynomial for offset
-    lane.setType(parseLaneType(odrLane->Attribute("type")));
-}
-
-void OpenDriveParser::calculateLanePoints(Lane& lane, const tinyxml2::XMLElement* odrLane) {
+void OpenDriveParser::calculateLanePoints(Lane* lane, const tinyxml2::XMLElement* odrLane) {
     auto* odrRoad = odrLane->Parent()->Parent()->Parent()->Parent();
+
     auto plan_view = odrRoad->FirstChildElement("planView");
-    auto offset = lane.width() * sgn(lane.id());
+    auto offset = lane->width() * sgn(lane->id());
     for (auto* geom = plan_view->FirstChildElement("geometry"); geom != nullptr;
          geom = geom->NextSiblingElement("geometry")) {
         auto s = geom->DoubleAttribute("s");
@@ -158,7 +166,7 @@ void OpenDriveParser::calculateLanePoints(Lane& lane, const tinyxml2::XMLElement
 
         else
             points = calculateStraight(x, y, hdg, length, offset);
-        lane.addPoints(points);
+        map_builder_.lane_addLanePoints(lane, points);
     }
 }
 

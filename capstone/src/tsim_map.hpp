@@ -1,126 +1,121 @@
 #ifndef __TSIM_MAP_HPP__
 #define __TSIM_MAP_HPP__
 
+#include <bits/stdint-uintn.h>
+
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "tsim_util.hpp"
 
 namespace tsim {
-class Road;
-class Map;
 enum class DrivingDirection { normal, inversed };
-enum class LaneSide { left, right };
+enum class LaneGroup { left, right, center };
 enum class LaneType { sidewalk, shoulder, driving, none };
 
 class JunctionConnection {
    public:
-    JunctionConnection(uint32_t id, uint32_t incomingRoad, uint32_t connectingRoad, DrivingDirection direction)
-        : id_(id), incomingRoad_(incomingRoad), connectingRoad_(connectingRoad), drivingDirection_(direction) {}
-
-    const uint32_t incomingRoad() const { return incomingRoad_; }
-    const uint32_t connectingRoad() const { return connectingRoad_; }
-    DrivingDirection drivingDirection() const { return drivingDirection_; }
+    const uint32_t incomingRoad() const { return incoming_road_; }
+    const uint32_t connectingRoad() const { return connecting_road_; }
+    const DrivingDirection drivingDirection() const { return driving_direction_; }
 
    private:
     uint16_t id_{0};
-    uint32_t incomingRoad_{0};
-    uint32_t connectingRoad_{0};
-    DrivingDirection drivingDirection_{DrivingDirection::normal};
+    uint32_t incoming_road_{0};
+    uint32_t connecting_road_{0};
+    DrivingDirection driving_direction_{DrivingDirection::normal};
+
+    friend class MapBuilder;
 };
 
-class Junction {
-   public:
-    Junction(Map* map) : map_(map){};
-    void setId(uint32_t id) { id_ = id; }
-    const uint32_t id() const { return id_; };
-    void addConnection(uint32_t id, uint32_t incomingRoad, uint32_t connectingRoad, DrivingDirection direction) {
-        connections_.emplace_back(JunctionConnection(id, incomingRoad, connectingRoad, direction));
-    }
-    std::vector<std::pair<Road*, DrivingDirection>> connectingRoads(uint32_t incomingRoad);
-
-   private:
-    Map* map_;
-    uint32_t id_{0};
-    std::vector<JunctionConnection> connections_;
-};
-
-enum class RoadType { road, junction };
+class Map;
+class Road;
 
 class Lane {
    public:
     // Lane(Road* road) : road_(road){};
-    Point getStart() { return lanePoints_.front(); }
+    const Point getStart() { return lane_points_.front(); }
     // Road* getRoad() { return road_; }
-    double getWidth() { return width_; }
-    void setOffset(double offset) { offset_ = offset; }
-    void setWidth(double width) { width_ = width; }
-    void setId(int id) { id_ = id; }
-    double width() { return width_; }
-    double id() { return id_; }
-    void setType(LaneType type) { type_ = type; }
-    void addPoints(std::vector<Point> points) { lanePoints_.insert(lanePoints_.end(), points.begin(), points.end()); }
-    const std::vector<Point>& points() const { return lanePoints_; }
+    // void setOffset(double offset) { offset_ = offset; }
+    // void setWidth(double width) { width_ = width; }
+    // void setId(int id) { id_ = id; }
+    const double width() { return width_; }
+    const double id() { return id_; }
+    // void setType(LaneType type) { type_ = type; }
+    // void addPoints(std::vector<Point> points) { lane_points_.insert(lane_points_.end(), points.begin(),
+    // points.end()); }
+    const std::vector<Point>& points() const { return lane_points_; }
 
    private:
-    std::vector<Point> lanePoints_;
-
-    // Road* road_;
+    std::vector<Point> lane_points_;
 
     int32_t id_{0};
-    LaneSide side_;
     double offset_{0.0f};
     double width_{0.0f};
     LaneType type_;
+
+    friend class MapBuilder;
 };
 
 class LaneSection {
    public:
-    void addLane(Lane&& lane) { lanes_.emplace_back(std::move(lane)); }
-    const std::vector<Lane>& lanes() const { return lanes_; };  // TODO not const
+    std::vector<std::shared_ptr<Lane>> lanes(LaneGroup group) const {
+        switch (group) {
+            case LaneGroup::left:
+                return left_;
+                break;
+            case LaneGroup::center:
+                return center_;
+                break;
+            case LaneGroup::right:
+                return right_;
+                break;
+        }
+    };  // TODO not const
 
    private:
-    std::vector<Lane> lanes_;
-    // std::vector<Lane> left_;
-    // std::vector<Lane> center_;
-    // std::vector<Lane> right_;
+    double s_offset_{0.0f};
+    std::vector<std::shared_ptr<Lane>> left_;
+    std::vector<std::shared_ptr<Lane>> center_;
+    std::vector<std::shared_ptr<Lane>> right_;
+
+    friend class MapBuilder;
 };
-class Map;
+
+class Junction {
+   public:
+    Junction(std::shared_ptr<Map> map) : map_(map){};
+    const uint32_t id() const { return id_; };
+    std::vector<std::pair<std::shared_ptr<Road>, DrivingDirection>> findConnectingRoads(uint32_t incomingRoad);
+
+   private:
+    std::shared_ptr<Map> map_;
+
+    uint32_t id_{0};
+    std::vector<JunctionConnection> connections_;
+
+    friend class MapBuilder;
+};
+
 class Road {
    public:
-    Road(Map* map) : map_(map){};
-    void setId(uint32_t id) { id_ = id; }
-    void setLength(double length) { length_ = length; }
-    // void setType(RoadType type) { type_ = type; };
-    void setPredecessor(uint32_t id, DrivingDirection direction) {
-        predecessor_ = id;
-        predecessor_driving_direction_ = direction;
-    };
-    void setSuccessor(uint32_t id, DrivingDirection direction) {
-        successor_ = id;
-        successor_driving_direction_ = direction;
-    };
-    std::pair<Road*, DrivingDirection> successor();
-    std::pair<Road*, DrivingDirection> predecessor();
+    Road(std::shared_ptr<Map> map) : map_(map){};
+    std::pair<std::shared_ptr<Road>, DrivingDirection> successor();
+    std::pair<std::shared_ptr<Road>, DrivingDirection> predecessor();
     const uint32_t id() const { return id_; };
-    const std::vector<LaneSection>& sections() const { return sections_; };  // Todo not const
-    void addLaneSection(LaneSection&& section) { sections_.emplace_back(std::move(section)); }
-    // RoadType type() const { return type_; };
+    const std::vector<std::shared_ptr<LaneSection>>& sections() const { return sections_; };  // Todo not const
     const std::vector<Point>& points() const { return points_; };
-    void setPoints(std::vector<Point> points) { points_ = points; };
-    Point startPoint() const { return points_.front(); };
-    void setJunction(uint32_t junction) { junction_ = junction; }
-    std::vector<std::pair<Road*, DrivingDirection>> findConnectingRoads(DrivingDirection direction);
-    void addPoints(std::vector<Point> points) { points_.insert(points_.end(), points.begin(), points.end()); }
+    const Point startPoint() const { return points_.front(); };
+    std::vector<std::pair<std::shared_ptr<Road>, DrivingDirection>> findConnectingRoads(DrivingDirection direction);
 
    private:
-    Map* map_{nullptr};
+    std::shared_ptr<Map> map_;
 
-    std::vector<LaneSection> sections_;
+    std::vector<std::shared_ptr<LaneSection>> sections_;
     std::vector<Point> points_;
-    // RoadType type_{RoadType::road};
 
     double length_{0};
     uint16_t id_{0};
@@ -130,47 +125,43 @@ class Road {
     uint32_t successor_{0};
     DrivingDirection successor_driving_direction_{DrivingDirection::normal};
     DrivingDirection predecessor_driving_direction_{DrivingDirection::normal};
-};
-
-class Map {
-   public:
-    void addRoad(Road&& road) { roads_.emplace_back(std::move(road)); }
-    void addJunction(Junction&& junction) { junctions_.emplace_back(std::move(junction)); }
-    void setRevMajor(uint8_t rev) { revMajor_ = rev; }
-    void setRevMinor(uint8_t rev) { revMinor_ = rev; }
-    Road* getRandomRoad() { return &roads_.at(std::rand() % roads_.size()); }
-    const std::vector<Road>& roads() const { return roads_; }
-    Road* findRoadById(int id) {
-        auto it = std::find_if(roads_.begin(), roads_.end(), [id](const Road& road) { return road.id() == id; });
-        if (it != roads_.end()) return &(*it);
-        return nullptr;
-    }
-    Junction* findJunctionById(int id) {
-        auto it = std::find_if(
-            junctions_.begin(), junctions_.end(), [id](const Junction& junction) { return junction.id() == id; });
-        if (it != junctions_.end()) return &(*it);
-        return nullptr;
-    }
-
-   private:
-    uint8_t revMajor_{0};
-    uint8_t revMinor_{0};
-
-    std::vector<Road> roads_;
-    std::vector<Junction> junctions_;
 
     friend class MapBuilder;
 };
 
-class MapBuilder {  // TODO switch to builder pattern
+class Map {
    public:
-    void addRoad(Road&& road) { map_.roads_.emplace_back(std::move(road)); }
-    void addJunction(Junction&& junction) { map_.junctions_.emplace_back(std::move(junction)); }
-    void setRevMajor(uint8_t rev) { map_.revMajor_ = rev; }
-    void setRevMinor(uint8_t rev) { map_.revMinor_ = rev; }
+    Map() = default;
+    Map(const Map& other) = delete;
+    Map(Map&& other) = delete;
+    Map operator=(const Map& other) = delete;
+    Map operator=(Map&& other) = delete;
 
-    Map map_;
+   public:
+    std::shared_ptr<Road> getRandomRoad() { return roads_.at(std::rand() % roads_.size()); }
+    std::vector<std::shared_ptr<Road>> roads() const { return roads_; }
+    std::shared_ptr<Road> findRoadById(int id) {
+        auto it =
+            std::find_if(roads_.begin(), roads_.end(), [id](std::shared_ptr<Road> road) { return road->id() == id; });
+        if (it != roads_.end()) return (*it);
+        return nullptr;
+    }
+    std::shared_ptr<Junction> findJunctionById(int id) {
+        auto it = std::find_if(junctions_.begin(), junctions_.end(), [id](std::shared_ptr<Junction> junction) {
+            return junction->id() == id;
+        });
+        if (it != junctions_.end()) return (*it);
+        return nullptr;
+    }
+
+   private:
+    std::vector<std::shared_ptr<Road>> roads_;
+    // should I use std::vector<Road> here?  or std::vector<std::unique_ptr<Road>>?
+    std::vector<std::shared_ptr<Junction>> junctions_;
+
+    friend class MapBuilder;
 };
+
 }  // namespace tsim
 
 #endif  // __TSIM_MAP_HPP__

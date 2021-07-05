@@ -13,12 +13,11 @@ namespace tsim {
 
 class TrafficObject {
    public:
-    TrafficObject(Map* map) {
-        map_ = map;
-        currentRoad_ = map_->getRandomRoad();
+    TrafficObject(std::shared_ptr<Map> map) : map_(map) {
+        current_road_ = map_->getRandomRoad();
         // currentLane_ = currentRoad_->getFirstLane();
-        position_ = currentRoad_->startPoint();
-        id_ = idCounter_++;
+        position_ = current_road_->startPoint();
+        id_ = id_counter_++;
     };
     virtual ~TrafficObject() {
         std::for_each(threads_.begin(), threads_.end(), [](std::thread& t) { t.join(); });
@@ -32,23 +31,23 @@ class TrafficObject {
 
     std::vector<std::thread> threads_;
     uint16_t id_{0};
-    Map* map_;
-    Road* currentRoad_;
-    Lane* currentLane_;
+    std::shared_ptr<Map> map_;
+    std::shared_ptr<Road> current_road_;
+    std::shared_ptr<Lane> current_lane_;
 
-    static uint16_t idCounter_;
+    static uint16_t id_counter_;
 };
 
 class Vehicle : public TrafficObject {
    public:
-    Vehicle(Map* map) : TrafficObject(map){};
+    Vehicle(std::shared_ptr<Map> map) : TrafficObject(map){};
     virtual void simulate() override;
 
    private:
     void drive();
 
    private:
-    DrivingDirection currentDrivingDirection_{DrivingDirection::normal};
+    DrivingDirection current_driving_direction_{DrivingDirection::normal};
 };
 
 }  // namespace tsim

@@ -12,13 +12,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 find_package(Cairo)
 find_package(GraphicsMagick)
 
-add_subdirectory(thirdparty/raylib)
+find_package(SDL2 REQUIRED)
+set(SDL2_GFX_PATH "thirdparty/sdl2_gfx" CACHE BOOL "" FORCE)
+#find_package(SDL2_gfx REQUIRED)
+
+include_directories(${SDL2_INCLUDE_DIRS})
+
 
 # Set IO2D flags
 set(IO2D_WITHOUT_SAMPLES 1)
 set(IO2D_WITHOUT_TESTS 1)
-
-
 add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/io2d)
 
@@ -29,12 +32,16 @@ src/tsim_map.cpp
 src/tsim_object.cpp
 src/opendrive_parser.cpp
 src/tsim_graphics.cpp
-#src/graphics_raylib.cpp
+src/renderer.cpp
 )
 
 # Add project executable
+string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC io2d
-    raylib
+    ${SDL2_LIBRARIES}
   pthread  tinyxml2)
+  
+  target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_GFX_INCLUDE_DIRS})
+  # target_link_libraries(${PROJECT_NAME} ${SDL2_GFX_LIBRARIES})
