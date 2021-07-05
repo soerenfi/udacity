@@ -29,7 +29,8 @@ class MapsRenderer {
     void findMaxMinValues();
 
     // void drawBuildings();
-    void drawHighways();
+    void drawRoads();
+    void drawLanes();
     // void drawRailways();
     // void drawLeisure();
     // void drawWater();
@@ -37,6 +38,7 @@ class MapsRenderer {
     // void drawStartPosition();
     // void drawEndPosition();
     void drawPath();
+    void drawAxes();
     void drawGrid();
     // void drawLine();
     void drawVehicles();

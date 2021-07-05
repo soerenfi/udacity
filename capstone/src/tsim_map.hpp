@@ -1,24 +1,19 @@
 #ifndef __TSIM_MAP_HPP__
 #define __TSIM_MAP_HPP__
 
-#include <bits/stdint-uintn.h>
-
 #include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "tsim_geometric.hpp"
+#include "tsim_util.hpp"
 
 namespace tsim {
 class Road;
 class Map;
 enum class DrivingDirection { normal, inversed };
-
-// struct connectedRoad {
-//     Road* road_;
-//     DrivingDirection contactPoint_;
-// };
+enum class LaneSide { left, right };
+enum class LaneType { sidewalk, shoulder, driving, none };
 
 class JunctionConnection {
    public:
@@ -51,21 +46,46 @@ class Junction {
     uint32_t id_{0};
     std::vector<JunctionConnection> connections_;
 };
-class LaneSection {};
 
-enum LaneType : uint8_t { shoulder, driving, none };
-enum RoadType : uint8_t { road, junction };
+enum class RoadType { road, junction };
 
 class Lane {
    public:
-    void calculateLanePoints(double x, double y, double hdg, double length);
+    // Lane(Road* road) : road_(road){};
     Point getStart() { return lanePoints_.front(); }
+    // Road* getRoad() { return road_; }
+    double getWidth() { return width_; }
+    void setOffset(double offset) { offset_ = offset; }
+    void setWidth(double width) { width_ = width; }
+    void setId(int id) { id_ = id; }
+    double width() { return width_; }
+    double id() { return id_; }
+    void setType(LaneType type) { type_ = type; }
+    void addPoints(std::vector<Point> points) { lanePoints_.insert(lanePoints_.end(), points.begin(), points.end()); }
+    const std::vector<Point>& points() const { return lanePoints_; }
 
    private:
-    uint32_t id_{0};
-    LaneType type_;
-    std::vector<LaneSection> sections_;
     std::vector<Point> lanePoints_;
+
+    // Road* road_;
+
+    int32_t id_{0};
+    LaneSide side_;
+    double offset_{0.0f};
+    double width_{0.0f};
+    LaneType type_;
+};
+
+class LaneSection {
+   public:
+    void addLane(Lane&& lane) { lanes_.emplace_back(std::move(lane)); }
+    const std::vector<Lane>& lanes() const { return lanes_; };  // TODO not const
+
+   private:
+    std::vector<Lane> lanes_;
+    // std::vector<Lane> left_;
+    // std::vector<Lane> center_;
+    // std::vector<Lane> right_;
 };
 class Map;
 class Road {
@@ -73,7 +93,7 @@ class Road {
     Road(Map* map) : map_(map){};
     void setId(uint32_t id) { id_ = id; }
     void setLength(double length) { length_ = length; }
-    void setType(RoadType type) { type_ = type; };
+    // void setType(RoadType type) { type_ = type; };
     void setPredecessor(uint32_t id, DrivingDirection direction) {
         predecessor_ = id;
         predecessor_driving_direction_ = direction;
@@ -85,28 +105,31 @@ class Road {
     std::pair<Road*, DrivingDirection> successor();
     std::pair<Road*, DrivingDirection> predecessor();
     const uint32_t id() const { return id_; };
-    RoadType type() const { return type_; };
+    const std::vector<LaneSection>& sections() const { return sections_; };  // Todo not const
+    void addLaneSection(LaneSection&& section) { sections_.emplace_back(std::move(section)); }
+    // RoadType type() const { return type_; };
     const std::vector<Point>& points() const { return points_; };
-    const Lane* firstLane() const { return &lanes_.front(); };
+    void setPoints(std::vector<Point> points) { points_ = points; };
     Point startPoint() const { return points_.front(); };
     void setJunction(uint32_t junction) { junction_ = junction; }
-    void calculateRoadPoints(double x, double y, double hdg, double length);
-    void calculateRoadPoints(double x, double y, double hdg, double length, double arc);
     std::vector<std::pair<Road*, DrivingDirection>> findConnectingRoads(DrivingDirection direction);
+    void addPoints(std::vector<Point> points) { points_.insert(points_.end(), points.begin(), points.end()); }
 
    private:
-    Map* map_;
-    RoadType type_;
+    Map* map_{nullptr};
+
+    std::vector<LaneSection> sections_;
+    std::vector<Point> points_;
+    // RoadType type_{RoadType::road};
+
+    double length_{0};
+    uint16_t id_{0};
+    uint32_t junction_{0};
+
     uint32_t predecessor_{0};
     uint32_t successor_{0};
     DrivingDirection successor_driving_direction_{DrivingDirection::normal};
     DrivingDirection predecessor_driving_direction_{DrivingDirection::normal};
-    std::vector<Point> points_;
-    std::vector<Lane> lanes_;
-    std::string name_;
-    double length_{0};
-    uint16_t id_{0};
-    uint32_t junction_{0};
 };
 
 class Map {
@@ -135,6 +158,18 @@ class Map {
 
     std::vector<Road> roads_;
     std::vector<Junction> junctions_;
+
+    friend class MapBuilder;
+};
+
+class MapBuilder {  // TODO switch to builder pattern
+   public:
+    void addRoad(Road&& road) { map_.roads_.emplace_back(std::move(road)); }
+    void addJunction(Junction&& junction) { map_.junctions_.emplace_back(std::move(junction)); }
+    void setRevMajor(uint8_t rev) { map_.revMajor_ = rev; }
+    void setRevMinor(uint8_t rev) { map_.revMinor_ = rev; }
+
+    Map map_;
 };
 }  // namespace tsim
 

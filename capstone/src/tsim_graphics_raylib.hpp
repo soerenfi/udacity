@@ -81,11 +81,9 @@ class RaylibGraphics {
                         linectr++;
                     }
             }
-            std::cout << "drawing " << linectr << " lines" << std::endl;
             // for (int line = 0; line < linevec.size() - 1; line++) {
             //     raylib::DrawLine3D(linevec[line], linevec[line + 1], raylib::BLUE);
             // }
-
             raylib::EndMode3D();
 
             raylib::DrawRectangle(10, 10, 320, 133, raylib::Fade(raylib::SKYBLUE, 0.5f));

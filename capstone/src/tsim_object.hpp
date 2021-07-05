@@ -6,8 +6,8 @@
 #include <thread>
 #include <vector>
 
-#include "tsim_geometric.hpp"
 #include "tsim_map.hpp"
+#include "tsim_util.hpp"
 
 namespace tsim {
 

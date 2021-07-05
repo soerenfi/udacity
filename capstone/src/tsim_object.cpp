@@ -17,7 +17,6 @@ void Vehicle::drive() {
     int road_step = 0;
     int steps_taken{0};
     while (true) {
-        std::cout << "vehicle " << id_ << " on road " << currentRoad_->id() << std::endl;
         auto now = std::chrono::system_clock::now();
         auto target = now + step;
         position_ = currentRoad_->points().at(road_step);
