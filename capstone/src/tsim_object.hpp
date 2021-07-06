@@ -15,8 +15,9 @@ class TrafficObject {
    public:
     TrafficObject(std::shared_ptr<Map> map) : map_(map) {
         current_road_ = map_->getRandomRoad();
-        // currentLane_ = currentRoad_->getFirstLane();
+        current_lane_ = current_road_->getFirstLane();
         position_ = current_road_->startPoint();
+        position_ = current_lane_->startPoint();
         id_ = id_counter_++;
     };
     virtual ~TrafficObject() {

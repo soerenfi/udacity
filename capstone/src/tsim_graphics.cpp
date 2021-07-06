@@ -29,6 +29,7 @@ void MapsRenderer::render() {
 
     drawRoads();
     drawLanes();
+    drawLaneBoundaries();
     drawVehicles();
     drawAxes();
 
@@ -49,18 +50,16 @@ void MapsRenderer::findMaxMinValues() {
 
 void MapsRenderer::drawPath() {
     io2d::render_props aliased{io2d::antialias::none};
-    io2d::brush foreBrush{io2d::rgba_color::orange};
     float width = 1.0f;
 
     auto pb = io2d::path_builder{};
     pb.rel_matrix(matrix_);
-    // pb.new_figure(io2d::point_2d(float(dimensions.x() / 2), float(dimensions.y() / 2)));
     pb.new_figure(io2d::point_2d(0.0f, 0.0f));
 
     pb.line(io2d::point_2d(10.f, 0.f));
     pb.line(io2d::point_2d(100.f, -50.f));
 
-    surface_.stroke(foreBrush, io2d::interpreted_path{pb}, std::nullopt, io2d::stroke_props{width});
+    surface_.stroke(lane_brush_, io2d::interpreted_path{pb}, std::nullopt, io2d::stroke_props{width});
 }
 
 void MapsRenderer::drawAxes() {
@@ -90,7 +89,6 @@ void MapsRenderer::drawAxes() {
 
 void MapsRenderer::drawVehicles() {
     io2d::render_props aliased{io2d::antialias::none};
-    io2d::brush foreBrush{io2d::rgba_color::blue};
 
     auto pb = io2d::path_builder{};
     pb.matrix(matrix_);
@@ -104,8 +102,8 @@ void MapsRenderer::drawVehicles() {
         pb.rel_line({0.f, -l_marker});
         pb.close_figure();
 
-        surface_.fill(foreBrush, pb);
-        surface_.stroke(foreBrush, io2d::interpreted_path{pb}, std::nullopt, std::nullopt, std::nullopt, aliased);
+        surface_.fill(lane_brush_, pb);
+        surface_.stroke(lane_brush_, io2d::interpreted_path{pb}, std::nullopt, std::nullopt, std::nullopt, aliased);
     }
 }
 
@@ -139,9 +137,6 @@ void MapsRenderer::drawGrid() {
 }
 
 void MapsRenderer::drawRoads() {
-    io2d::render_props aliased{io2d::antialias::none};
-    io2d::brush roadBrush{io2d::rgba_color::orange};
-
     for (const auto& road : map_->roads()) {
         // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
         // auto& rep = rep_it->second;
@@ -150,28 +145,29 @@ void MapsRenderer::drawRoads() {
         auto pb = io2d::path_builder{};
         pb.rel_matrix(matrix_);
         for (const auto& pt : road->points()) pb.line(io2d::point_2d(pt.x(), pt.y()));
-        surface_.stroke(roadBrush, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{});
+        surface_.stroke(road_brush_, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{});
     }
 }
 
 void MapsRenderer::drawLanes() {
-    io2d::render_props aliased{io2d::antialias::none};
-    io2d::brush lanebrush{io2d::rgba_color::blue};
+    auto width = .2f;
+    auto sp = io2d::stroke_props{width, io2d::line_cap::round};
+
     for (const auto& road : map_->roads()) {
         for (const auto& section : road->sections()) {
             for (const auto& lane : section->lanes(tsim::LaneGroup::left)) {
                 // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
                 // auto& rep = rep_it->second;
-                auto width = .3f;
-                auto sp = io2d::stroke_props{width, io2d::line_cap::round};
 
                 auto pb = io2d::path_builder{};
                 pb.rel_matrix(matrix_);
                 for (const auto& pt : lane->points()) {
                     pb.line(io2d::point_2d(pt.x(), pt.y()));
                 }
-                surface_.stroke(lanebrush, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{});
+                surface_.stroke(
+                    lane_brush_, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{0.f, {1.f, 2.f}});
             }
+
             for (const auto& lane : section->lanes(tsim::LaneGroup::right)) {
                 // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
                 // auto& rep = rep_it->second;
@@ -183,7 +179,41 @@ void MapsRenderer::drawLanes() {
                 for (const auto& pt : lane->points()) {
                     pb.line(io2d::point_2d(pt.x(), pt.y()));
                 }
-                surface_.stroke(lanebrush, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{});
+                surface_.stroke(
+                    lane_brush_, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{0.f, {1.f, 2.f}});
+            }
+        }
+    }
+}
+
+void MapsRenderer::drawLaneBoundaries() {
+    auto width = .5f;
+    auto sp = io2d::stroke_props{width, io2d::line_cap::round};
+    for (const auto& road : map_->roads()) {
+        for (const auto& section : road->sections()) {
+            for (const auto& lane : section->lanes(tsim::LaneGroup::left)) {
+                // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
+                // auto& rep = rep_it->second;
+
+                auto pb = io2d::path_builder{};
+                pb.rel_matrix(matrix_);
+                for (const auto& pt : lane->boundaryPoints()) {
+                    pb.line(io2d::point_2d(pt.x(), pt.y()));
+                }
+                surface_.stroke(lane_brush_, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{});
+            }
+            for (const auto& lane : section->lanes(tsim::LaneGroup::right)) {
+                // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
+                // auto& rep = rep_it->second;
+                auto width = .3f;
+                auto sp = io2d::stroke_props{width, io2d::line_cap::round};
+
+                auto pb = io2d::path_builder{};
+                pb.rel_matrix(matrix_);
+                for (const auto& pt : lane->boundaryPoints()) {
+                    pb.line(io2d::point_2d(pt.x(), pt.y()));
+                }
+                surface_.stroke(lane_brush_, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{});
             }
         }
     }

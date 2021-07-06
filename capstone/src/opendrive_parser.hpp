@@ -21,6 +21,7 @@ class OpenDriveParser {
     void parseLane(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
     void calculateRoadPoints(tsim::Road* road, const tinyxml2::XMLElement* odr_road);
     void calculateLanePoints(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
+    void calculateLaneBoundaryPoints(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
     std::vector<tsim::Point> calculateStraight(double x, double y, double hdg, double length, double offset = 0);
     std::vector<tsim::Point> calculateArc(double x, double y, double hdg, double length, double arc, double offset = 0);
 

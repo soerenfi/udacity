@@ -7,12 +7,13 @@
 
 namespace tsim {
 
-class MapBuilder {  // TODO switch to builder pattern
+class MapBuilder {
    public:
     MapBuilder() { map_ = std::make_shared<Map>(); }
-    std::shared_ptr<Road> addRoad(int id) {
+    std::shared_ptr<Road> addRoad(int id, int junction) {
         std::shared_ptr<tsim::Road> road = std::make_shared<tsim::Road>(map_);
         road->id_ = id;
+        road->junction_ = junction;
         map_->roads_.push_back(road);
         return road;
     }
@@ -22,7 +23,6 @@ class MapBuilder {  // TODO switch to builder pattern
         if (it != map_->roads_.end()) return (*it);
         return nullptr;
     }
-    // void addJunction(Junction&& junction) { map_.junctions_.emplace_back(std::move(junction)); }
 
     void road_setLength(Road* road, double length) { road->length_ = length; }
     // void setType(RoadType type) { type_ = type; };
@@ -65,7 +65,9 @@ class MapBuilder {  // TODO switch to builder pattern
     void lane_addLanePoints(Lane* lane, std::vector<Point> points) {
         lane->lane_points_.insert(lane->lane_points_.end(), points.begin(), points.end());
     }
-
+    void lane_addLaneBoundaryPoints(Lane* lane, std::vector<Point> points) {
+        lane->lane_boundary_points_.insert(lane->lane_boundary_points_.end(), points.begin(), points.end());
+    }
     std::shared_ptr<Junction> addJunction(int id) {
         std::shared_ptr<Junction> junction = std::make_shared<Junction>(map_);
         junction->id_ = id;

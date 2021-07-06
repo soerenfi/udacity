@@ -20,6 +20,7 @@ void Vehicle::drive() {
         auto now = std::chrono::system_clock::now();
         auto target = now + step;
         position_ = current_road_->points().at(road_step);
+        position_ = current_lane_->points().at(road_step);
 
         if (steps_taken < road_size) {
             switch (current_driving_direction_) {

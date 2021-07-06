@@ -37,7 +37,7 @@ void OpenDriveParser::parseRoads() {
 
     for (auto* odrRoad = odr->FirstChildElement("road"); odrRoad != nullptr;
          odrRoad = odrRoad->NextSiblingElement("road")) {
-        auto road = map_builder_.addRoad(odrRoad->UnsignedAttribute("id"));
+        auto road = map_builder_.addRoad(odrRoad->UnsignedAttribute("id"), odrRoad->IntAttribute("junction"));
 
         auto predecessor = odrRoad->FirstChildElement("link")->FirstChildElement("predecessor");
         if (predecessor) {
@@ -139,12 +139,13 @@ void OpenDriveParser::parseLaneSections(
                 lane_section, lane_group, odrLane->IntAttribute("id"),
                 odrLane->FirstChildElement("width")->DoubleAttribute("sOffset"),
                 odrLane->FirstChildElement("width")->DoubleAttribute("a"), parseLaneType(odrLane->Attribute("type")));
+            calculateLaneBoundaryPoints(lane.get(), odrLane);
             calculateLanePoints(lane.get(), odrLane);
         }
     }
 }
 
-void OpenDriveParser::calculateLanePoints(Lane* lane, const tinyxml2::XMLElement* odrLane) {
+void OpenDriveParser::calculateLaneBoundaryPoints(Lane* lane, const tinyxml2::XMLElement* odrLane) {
     auto* odrRoad = odrLane->Parent()->Parent()->Parent()->Parent();
 
     auto plan_view = odrRoad->FirstChildElement("planView");
@@ -166,6 +167,32 @@ void OpenDriveParser::calculateLanePoints(Lane* lane, const tinyxml2::XMLElement
 
         else
             points = calculateStraight(x, y, hdg, length, offset);
+        map_builder_.lane_addLaneBoundaryPoints(lane, points);
+    }
+}
+
+void OpenDriveParser::calculateLanePoints(Lane* lane, const tinyxml2::XMLElement* odrLane) {
+    auto* odrRoad = odrLane->Parent()->Parent()->Parent()->Parent();
+
+    auto plan_view = odrRoad->FirstChildElement("planView");
+    auto offset = lane->width() * sgn(lane->id());
+    for (auto* geom = plan_view->FirstChildElement("geometry"); geom != nullptr;
+         geom = geom->NextSiblingElement("geometry")) {
+        auto s = geom->DoubleAttribute("s");
+        auto x = geom->DoubleAttribute("x");
+        auto y = geom->DoubleAttribute("y");
+        auto hdg = geom->DoubleAttribute("hdg");
+        auto length = geom->DoubleAttribute("length");
+
+        // line, spiral, arc, poly3, parampoly3
+        auto arc = geom->FirstChildElement("arc");
+
+        std::vector<Point> points;
+        if (arc != nullptr)
+            points = calculateArc(x, y, hdg, length, arc->DoubleAttribute("curvature"), offset / 2);
+
+        else
+            points = calculateStraight(x, y, hdg, length, offset / 2);
         map_builder_.lane_addLanePoints(lane, points);
     }
 }
@@ -200,7 +227,7 @@ std::vector<Point> OpenDriveParser::calculateArc(
     auto x_m = x + 1 / arc * -std::sin(hdg);
     auto y_m = y + 1 / arc * std::cos(hdg);
     double road_length{0};
-    double step = 0.1f;
+    double step = 0.3f;
     double start_angle = hdg - sgn(arc) * M_PI / 2;
     double end_angle = start_angle + length * arc;
 

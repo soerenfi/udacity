@@ -16,41 +16,24 @@ enum class DrivingDirection { normal, inversed };
 enum class LaneGroup { left, right, center };
 enum class LaneType { sidewalk, shoulder, driving, none };
 
-class JunctionConnection {
-   public:
-    const uint32_t incomingRoad() const { return incoming_road_; }
-    const uint32_t connectingRoad() const { return connecting_road_; }
-    const DrivingDirection drivingDirection() const { return driving_direction_; }
-
-   private:
-    uint16_t id_{0};
-    uint32_t incoming_road_{0};
-    uint32_t connecting_road_{0};
-    DrivingDirection driving_direction_{DrivingDirection::normal};
-
-    friend class MapBuilder;
-};
-
 class Map;
 class Road;
 
 class Lane {
    public:
-    // Lane(Road* road) : road_(road){};
-    const Point getStart() { return lane_points_.front(); }
-    // Road* getRoad() { return road_; }
-    // void setOffset(double offset) { offset_ = offset; }
-    // void setWidth(double width) { width_ = width; }
-    // void setId(int id) { id_ = id; }
+    const Point startPoint() { return lane_points_.front(); }
     const double width() { return width_; }
     const double id() { return id_; }
-    // void setType(LaneType type) { type_ = type; }
-    // void addPoints(std::vector<Point> points) { lane_points_.insert(lane_points_.end(), points.begin(),
-    // points.end()); }
+    std::shared_ptr<Lane> findSuccessor() { return nullptr; };
     const std::vector<Point>& points() const { return lane_points_; }
+    const std::vector<Point>& boundaryPoints() const { return lane_boundary_points_; }
 
    private:
     std::vector<Point> lane_points_;
+    std::vector<Point> lane_boundary_points_;
+
+    int32_t predecessor_{0};
+    int32_t successor_{0};
 
     int32_t id_{0};
     double offset_{0.0f};
@@ -85,6 +68,20 @@ class LaneSection {
     friend class MapBuilder;
 };
 
+class JunctionConnection {
+   public:
+    const uint32_t incomingRoad() const { return incoming_road_; }
+    const uint32_t connectingRoad() const { return connecting_road_; }
+    const DrivingDirection drivingDirection() const { return driving_direction_; }
+
+   private:
+    uint16_t id_{0};
+    uint32_t incoming_road_{0};
+    uint32_t connecting_road_{0};
+    DrivingDirection driving_direction_{DrivingDirection::normal};
+
+    friend class MapBuilder;
+};
 class Junction {
    public:
     Junction(std::shared_ptr<Map> map) : map_(map){};
@@ -103,13 +100,26 @@ class Junction {
 class Road {
    public:
     Road(std::shared_ptr<Map> map) : map_(map){};
+
+    const uint32_t id() const { return id_; };
+    const Point startPoint() const { return points_.front(); };
     std::pair<std::shared_ptr<Road>, DrivingDirection> successor();
     std::pair<std::shared_ptr<Road>, DrivingDirection> predecessor();
-    const uint32_t id() const { return id_; };
+    std::vector<std::pair<std::shared_ptr<Road>, DrivingDirection>> findConnectingRoads(DrivingDirection direction);
+    std::shared_ptr<Lane> getFirstLane() {
+        auto lane_section = sections_.front();  // TODO multiple lane sections
+        auto lanes = lane_section->lanes(LaneGroup::left);
+        return lanes.front();
+    };
+    std::shared_ptr<Lane> getLaneById(int id) {
+        auto lane_section = sections_.front();  // TODO multiple lane sections
+        auto lanes = (id > 0 ? lane_section->lanes(LaneGroup::left) : lane_section->lanes(LaneGroup::right));
+        auto it =
+            std::find_if(lanes.begin(), lanes.end(), [id](std::shared_ptr<Lane> lane) { return lane->id() == id; });
+        return *it;
+    }
     const std::vector<std::shared_ptr<LaneSection>>& sections() const { return sections_; };  // Todo not const
     const std::vector<Point>& points() const { return points_; };
-    const Point startPoint() const { return points_.front(); };
-    std::vector<std::pair<std::shared_ptr<Road>, DrivingDirection>> findConnectingRoads(DrivingDirection direction);
 
    private:
     std::shared_ptr<Map> map_;
@@ -119,7 +129,7 @@ class Road {
 
     double length_{0};
     uint16_t id_{0};
-    uint32_t junction_{0};
+    int32_t junction_{0};
 
     uint32_t predecessor_{0};
     uint32_t successor_{0};
