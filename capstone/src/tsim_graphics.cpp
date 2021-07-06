@@ -155,24 +155,9 @@ void MapsRenderer::drawLanes() {
 
     for (const auto& road : map_->roads()) {
         for (const auto& section : road->sections()) {
-            for (const auto& lane : section->lanes(tsim::LaneGroup::left)) {
+            for (const auto& lane : section->lanes()) {
                 // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
                 // auto& rep = rep_it->second;
-
-                auto pb = io2d::path_builder{};
-                pb.rel_matrix(matrix_);
-                for (const auto& pt : lane->points()) {
-                    pb.line(io2d::point_2d(pt.x(), pt.y()));
-                }
-                surface_.stroke(
-                    lane_brush_, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{0.f, {1.f, 2.f}});
-            }
-
-            for (const auto& lane : section->lanes(tsim::LaneGroup::right)) {
-                // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
-                // auto& rep = rep_it->second;
-                auto width = .3f;
-                auto sp = io2d::stroke_props{width, io2d::line_cap::round};
 
                 auto pb = io2d::path_builder{};
                 pb.rel_matrix(matrix_);
@@ -191,22 +176,9 @@ void MapsRenderer::drawLaneBoundaries() {
     auto sp = io2d::stroke_props{width, io2d::line_cap::round};
     for (const auto& road : map_->roads()) {
         for (const auto& section : road->sections()) {
-            for (const auto& lane : section->lanes(tsim::LaneGroup::left)) {
+            for (const auto& lane : section->lanes()) {
                 // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
                 // auto& rep = rep_it->second;
-
-                auto pb = io2d::path_builder{};
-                pb.rel_matrix(matrix_);
-                for (const auto& pt : lane->boundaryPoints()) {
-                    pb.line(io2d::point_2d(pt.x(), pt.y()));
-                }
-                surface_.stroke(lane_brush_, io2d::interpreted_path{pb}, std::nullopt, sp, io2d::dashes{});
-            }
-            for (const auto& lane : section->lanes(tsim::LaneGroup::right)) {
-                // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
-                // auto& rep = rep_it->second;
-                auto width = .3f;
-                auto sp = io2d::stroke_props{width, io2d::line_cap::round};
 
                 auto pb = io2d::path_builder{};
                 pb.rel_matrix(matrix_);

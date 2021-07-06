@@ -16,9 +16,10 @@ class OpenDriveParser {
     void parseRoads();
     void parseLanes();
     void parseJunctions();
-    void parseLaneSections(
-        tsim::LaneSection* lane_section, const tinyxml2::XMLElement* group, tsim::LaneGroup lane_group);
+    void roadConnections();
+    void parseLaneSections(std::shared_ptr<tsim::LaneSection> lane_section, const tinyxml2::XMLElement* group);
     void parseLane(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
+    void laneSectionConnections(std::shared_ptr<tsim::LaneSection> lane_section, const tinyxml2::XMLElement* group);
     void calculateRoadPoints(tsim::Road* road, const tinyxml2::XMLElement* odr_road);
     void calculateLanePoints(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
     void calculateLaneBoundaryPoints(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);

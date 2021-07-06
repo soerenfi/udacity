@@ -15,7 +15,7 @@ class TrafficObject {
    public:
     TrafficObject(std::shared_ptr<Map> map) : map_(map) {
         current_road_ = map_->getRandomRoad();
-        current_lane_ = current_road_->getFirstLane();
+        current_lane_ = current_road_->getLaneById(current_lane_id_);
         position_ = current_road_->startPoint();
         position_ = current_lane_->startPoint();
         id_ = id_counter_++;
@@ -28,13 +28,15 @@ class TrafficObject {
     const Point& position() const { return position_; };
 
    protected:
+    std::shared_ptr<Map> map_;
+
     Point position_{0.0f, 0.0f};
 
     std::vector<std::thread> threads_;
     uint16_t id_{0};
-    std::shared_ptr<Map> map_;
     std::shared_ptr<Road> current_road_;
     std::shared_ptr<Lane> current_lane_;
+    int current_lane_id_{-1};
 
     static uint16_t id_counter_;
 };

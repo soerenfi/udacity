@@ -4,25 +4,49 @@
 namespace tsim {
 class Point {
    public:
-    Point(double x, double y) {
-        x_ = x;
-        y_ = y;
-        z_ = 0;
+    Point(double x, double y, double z = 0) : x_(x), y_(y), z_(z) {}
+    Point(const Point& other) {
+        x_ = other.x();
+        y_ = other.y();
+        z_ = other.z();
     }
-    Point& operator+(const Point& rhs);
-    Point& operator-(const Point& rhs);
+    Point(Point&& other) {
+        x_ = other.x();
+        y_ = other.y();
+        z_ = other.z();
+    }
+    Point operator=(const Point& other) {
+        x_ = other.x();
+        y_ = other.y();
+        z_ = other.z();
+    }
+    Point operator=(Point&& other) {
+        x_ = other.x();
+        y_ = other.y();
+        z_ = other.z();
+    }
+
+    // Point& operator+(const Point& other) {
+    //     x_ += other.x();
+    //     y_ += other.y();
+    //     z_ += other.z();
+    // return *this;
+    // }
+    // Point& operator-(const Point& other) {
+    //     x_ -= other.x();
+    //     y_ -= other.y();
+    //     z_ -= other.z();
+    // return *this;
+    // }
 
     double x() const { return x_; };
-    void setX(double value) { x_ = value; };
     double y() const { return y_; };
-    void setY(double value) { y_ = value; };
     double z() const { return z_; };
-    void setZ(double value) { z_ = value; };
 
    private:
-    double x_{0};
-    double y_{0};
-    double z_{0};
+    double x_;
+    double y_;
+    double z_;
 };
 
 template <typename T>
