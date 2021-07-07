@@ -6,7 +6,6 @@
 
 #include "renderer.hpp"
 #include "tsim_graphics.hpp"
-#include "tsim_object.hpp"
 #include "tsim_simulator.hpp"
 
 Renderer::Renderer(tsim::Simulator* sim) : simulator_(sim) {

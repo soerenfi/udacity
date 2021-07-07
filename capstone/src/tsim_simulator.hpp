@@ -6,19 +6,23 @@
 
 // #include "renderer.hpp"
 #include "tsim_graphics.hpp"
-#include "tsim_map.hpp"
-#include "tsim_object.hpp"
 
 namespace tsim {
-
-class Simulator {
+class Map;
+class TrafficObject;
+class Simulator : std::enable_shared_from_this<Simulator> {
    public:
     Simulator(std::shared_ptr<Map> map) : map_(map), renderer_(this){};
-    void run() {
-        for (auto const& obj : objects_) obj->simulate();
-        renderer_.display();
-    };
-    void addVehicle() { objects_.emplace_back(std::make_shared<Vehicle>(map_)); };
+    ~Simulator();
+    Simulator(const Simulator& other) = delete;
+    Simulator(Simulator&& other) = delete;
+    Simulator operator=(const Simulator& other) = delete;
+    Simulator operator=(Simulator&& other) = delete;
+
+    void run();
+    void addVehicle();
+    void addThread(std::thread&& thread);
+
     std::vector<std::shared_ptr<TrafficObject>> objects() { return objects_; };
     std::shared_ptr<Map> map() { return map_; };
 
@@ -27,7 +31,6 @@ class Simulator {
     MapsRenderer renderer_;
     // Renderer renderer_;
 
-    // add renderer mutex
     std::vector<std::shared_ptr<TrafficObject>> objects_;
     std::vector<std::thread> threads_;
 };

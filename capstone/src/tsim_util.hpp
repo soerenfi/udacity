@@ -19,25 +19,28 @@ class Point {
         x_ = other.x();
         y_ = other.y();
         z_ = other.z();
+        return *this;
     }
     Point operator=(Point&& other) {
         x_ = other.x();
         y_ = other.y();
         z_ = other.z();
+        return *this;
     }
 
-    // Point& operator+(const Point& other) {
-    //     x_ += other.x();
-    //     y_ += other.y();
-    //     z_ += other.z();
-    // return *this;
-    // }
-    // Point& operator-(const Point& other) {
-    //     x_ -= other.x();
-    //     y_ -= other.y();
-    //     z_ -= other.z();
-    // return *this;
-    // }
+    // arithmetic
+    Point& operator+(const Point& other) {
+        x_ += other.x();
+        y_ += other.y();
+        z_ += other.z();
+        return *this;
+    }
+    Point& operator-(const Point& other) {
+        x_ -= other.x();
+        y_ -= other.y();
+        z_ -= other.z();
+        return *this;
+    }
 
     double x() const { return x_; };
     double y() const { return y_; };

@@ -32,6 +32,8 @@ src/tsim_map.cpp
 src/tsim_object.cpp
 src/opendrive_parser.cpp
 src/tsim_graphics.cpp
+src/tsim_simulator.cpp
+src/tsim_map_builder.cpp
 src/renderer.cpp
 )
 

@@ -2,12 +2,11 @@
 
 #include "tsim_graphics.hpp"
 #include "tsim_map.hpp"
+#include "tsim_object.hpp"
 #include "tsim_simulator.hpp"
 
 MapsRenderer::MapsRenderer(tsim::Simulator* sim)
-    : surface_{1280, 1280, io2d::format::argb32, io2d::scaling::none, io2d::refresh_style::fixed, 30}, simulator_(sim) {
-    // surface_ =
-    // io2d::output_surface{1280, 1280, io2d::format::argb32, io2d::scaling::none, io2d::refresh_style::fixed, 30};
+    : surface_{1280, 1280, io2d::format::argb32, io2d::scaling::none, io2d::refresh_style::fixed, 20}, simulator_(sim) {
     map_ = simulator_->map();
     findMaxMinValues();
     scale_ = std::max((max_y - min_y), (max_x - min_x)) * 1.1f;
@@ -23,18 +22,16 @@ void MapsRenderer::render() {
     matrix_ = io2d::matrix_2d::create_scale({px / scale_, -px / scale_}) *
               io2d::matrix_2d::create_translate({-min_x / 2 + scale_ * 0.1f, scale_ * 0.2f});
 
-    surface_.paint(m_BackgroundFillBrush);
+    surface_.paint(background_brush_);
 
+    // get current objects from simulator
     objects_ = simulator_->objects();
 
     drawRoads();
-    drawLanes();
+    // drawLanes();
     drawLaneBoundaries();
     drawVehicles();
     drawAxes();
-
-    // DrawGrid(surface_);
-    // DrawPath(surface_);
 }
 
 void MapsRenderer::findMaxMinValues() {
@@ -107,39 +104,8 @@ void MapsRenderer::drawVehicles() {
     }
 }
 
-void MapsRenderer::drawGrid() {
-    auto rp = io2d::render_props{};
-    rp.compositing(io2d::compositing_op::source);
-    int m_BoardHeight = 10;
-    int m_BoardWidth = 10;
-    int m_CellPxSize = 100;
-    auto b = io2d::brush{io2d::rgba_color::gray};
-    auto sp = io2d::stroke_props{1., io2d::line_cap::none};
-    auto dp = io2d::dashes{1.f, {1.f, 1.f}};
-
-    auto pb = io2d::path_builder{};
-    pb.new_figure({0.5f, 0.f});
-    pb.rel_line({0.f, m_BoardHeight * m_CellPxSize});
-    auto vert_line = io2d::interpreted_path{pb};
-    for (auto i = 0; i < m_BoardWidth; ++i) {
-        rp.surface_matrix(io2d::matrix_2d::create_translate({i * m_CellPxSize, 0.f}));
-        surface_.stroke(b, vert_line, std::nullopt, sp, dp, rp);
-    }
-
-    pb.clear();
-    pb.new_figure({0.f, 0.5f});
-    pb.rel_line({m_BoardWidth * m_CellPxSize, 0.f});
-    auto hor_line = io2d::interpreted_path{pb};
-    for (auto i = 0; i < m_BoardHeight; ++i) {
-        rp.surface_matrix(io2d::matrix_2d::create_translate({0.f, i * m_CellPxSize}));
-        surface_.stroke(b, hor_line, std::nullopt, sp, dp, rp);
-    }
-}
-
 void MapsRenderer::drawRoads() {
     for (const auto& road : map_->roads()) {
-        // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
-        // auto& rep = rep_it->second;
         auto width = .5f;
         auto sp = io2d::stroke_props{width, io2d::line_cap::round};
         auto pb = io2d::path_builder{};
@@ -156,9 +122,6 @@ void MapsRenderer::drawLanes() {
     for (const auto& road : map_->roads()) {
         for (const auto& section : road->sections()) {
             for (const auto& lane : section->lanes()) {
-                // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
-                // auto& rep = rep_it->second;
-
                 auto pb = io2d::path_builder{};
                 pb.rel_matrix(matrix_);
                 for (const auto& pt : lane->points()) {
@@ -177,9 +140,6 @@ void MapsRenderer::drawLaneBoundaries() {
     for (const auto& road : map_->roads()) {
         for (const auto& section : road->sections()) {
             for (const auto& lane : section->lanes()) {
-                // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
-                // auto& rep = rep_it->second;
-
                 auto pb = io2d::path_builder{};
                 pb.rel_matrix(matrix_);
                 for (const auto& pt : lane->boundaryPoints()) {
@@ -190,18 +150,3 @@ void MapsRenderer::drawLaneBoundaries() {
         }
     }
 }
-
-// }
-// io2d::interpreted_path Render::PathLine() const {
-//     if (m_Model.path.empty()) return {};
-
-//     const auto nodes = m_Model.path;
-
-//     auto pb = io2d::path_builder{};
-//     pb.matrix(m_Matrix);
-//     pb.new_figure(ToPoint2D(m_Model.path[0]));
-
-//     for (int i = 1; i < m_Model.path.size(); i++) pb.line(io2d::point_2d(m_Model.path[i]));
-
-//     return io2d::interpreted_path{pb};
-// }

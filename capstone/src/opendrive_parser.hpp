@@ -14,24 +14,30 @@ class OpenDriveParser {
    private:
     void parseHeader();
     void parseRoads();
-    void parseLanes();
     void parseJunctions();
     void roadConnections();
-    void parseLaneSections(std::shared_ptr<tsim::LaneSection> lane_section, const tinyxml2::XMLElement* group);
+    void parseLaneSections();
+    void parseLanes();
+    void laneConnections();
+
     void parseLane(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
-    void laneSectionConnections(std::shared_ptr<tsim::LaneSection> lane_section, const tinyxml2::XMLElement* group);
+    void parseLaneGroup(std::shared_ptr<tsim::LaneSection> lane_section, const tinyxml2::XMLElement* group);
+    void laneConnections(std::shared_ptr<tsim::LaneSection> lane_section, const tinyxml2::XMLElement* group);
+
+    // calculate geometrics
     void calculateRoadPoints(tsim::Road* road, const tinyxml2::XMLElement* odr_road);
     void calculateLanePoints(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
     void calculateLaneBoundaryPoints(tsim::Lane* lane, const tinyxml2::XMLElement* odrLane);
+
     std::vector<tsim::Point> calculateStraight(double x, double y, double hdg, double length, double offset = 0);
     std::vector<tsim::Point> calculateArc(double x, double y, double hdg, double length, double arc, double offset = 0);
 
-    tsim::DrivingDirection contactPointToDrivingDirection(const char* cp);
+    // specific enum parsers
     tsim::LaneType parseLaneType(const char* lt);
 
    private:
-    tsim::MapBuilder map_builder_;
     tinyxml2::XMLDocument xml_doc_;
+    tsim::MapBuilder map_builder_;
 };
 }  // namespace parser
 
