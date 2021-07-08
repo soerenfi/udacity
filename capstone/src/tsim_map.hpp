@@ -14,7 +14,7 @@
 namespace tsim {
 
 enum class LaneGroup { left, right, center };
-enum class LaneType { sidewalk, shoulder, driving, none };
+enum class LaneType { sidewalk, shoulder, driving, restricted, median, parking, none };
 enum class RoadType { road, junction };
 
 class Map;
@@ -31,6 +31,7 @@ class Lane {
     const Point startPoint() { return lane_points_.front(); }
     const double width() { return width_; }
     const double id() { return id_; }
+    LaneType laneType() { return type_; }
 
     const std::vector<Point>& points() const { return lane_points_; }
     const std::vector<Point>& boundaryPoints() const { return lane_boundary_points_; }
@@ -85,9 +86,9 @@ struct LaneLink {
 };
 class JunctionConnection {
    public:
-    // const uint32_t incomingRoad() const { return incoming_road_; }
-    // const uint32_t connectingRoad() const { return connecting_road_; }
-    // const std::vector<LaneLink>& laneLinks() const { return lane_links_; }
+    const uint32_t incomingRoad() const { return incoming_road_; }
+    const uint32_t connectingRoad() const { return connecting_road_; }
+    const std::vector<LaneLink>& laneLinks() const { return lane_links_; }
 
     std::vector<LaneLink> lane_links_;
 
@@ -132,7 +133,7 @@ class Road {
     const Point startPoint() const { return road_points_.front(); };
     std::vector<std::shared_ptr<Road>> successors() { return successors_; };
     std::vector<std::shared_ptr<Road>> predecessors() { return predecessors_; };
-    // int junction() { return junction_; };
+    int junction() { return junction_; };
     // std::vector<std::pair<std::shared_ptr<Road>, DrivingDirection>> findConnectingRoads(DrivingDirection direction);
     std::shared_ptr<Lane> getFirstLane();
     std::shared_ptr<Lane> getLaneById(int id);
@@ -157,7 +158,14 @@ class Road {
 
 class Map {
    public:
-    std::shared_ptr<Road> getRandomRoad() { return roads_.at(std::rand() % roads_.size()); }
+    std::shared_ptr<Road> getRandomRoad() {
+        auto road = roads_.at(std::rand() % roads_.size());
+        auto lane_section = road->sections().front();  // TODO multiple lane sections
+        auto lanes = lane_section->lanes();
+        auto it = std::find_if(lanes.begin(), lanes.end(), [](std::shared_ptr<Lane> lane) { return lane->id() == -1; });
+        if (it == lanes.end()) return getRandomRoad();
+        return road;
+    }
     std::vector<std::shared_ptr<Road>> roads() const { return roads_; }
     std::shared_ptr<Road> findRoadById(int id);
     std::shared_ptr<Junction> findJunctionById(int id);

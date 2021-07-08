@@ -149,13 +149,15 @@ void OpenDriveParser::parseLaneSections() {
         auto* odrLanes = odrRoad->FirstChildElement("lanes");
         std::size_t lane_section_counter{0};
         auto lane_sections = road->sections();
+        auto road_id = road->id();
         for (auto* odrLaneSection = odrLanes->FirstChildElement("laneSection"); odrLaneSection != nullptr;
              odrLaneSection = odrLaneSection->NextSiblingElement("laneSection")) {
             // populate lane section connections
-            if (odrRoad->IntAttribute("junction") == -1) {
+            // if (odrRoad->IntAttribute("junction") == -1) {  // wrrong
+            if (true) {
                 // road is not part of a junction. For first lane section, add last lane section of previous road as
-                // precedessor. For last lane section, add first lane section of next road as successor. Otherwise add
-                // prev/next lane section in road as successor.
+                // precedessor. For last lane section, add first lane section of next road as successor. Otherwise
+                // add prev/next lane section in road as successor.
                 auto lane_section = lane_sections.at(lane_section_counter);
                 if (lane_sections.size() == 1) {
                     auto road_predecessors = road->predecessors();
@@ -183,10 +185,9 @@ void OpenDriveParser::parseLaneSections() {
                         lane_section.get(), lane_sections.at(lane_section_counter - 1));
                 }
             } else {
-                // road is part of a junction. Add last lane section of previous road as predecessor, first lane section
-                // of subsequent road as successor
+                // road is part of a junction. Add last lane section of previous road as predecessor, first lane
+                // section of subsequent road as successor
                 auto lane_section = lane_sections.at(lane_section_counter);
-
                 auto road_predecessors = road->predecessors();
                 for (auto succ : road_predecessors)
                     map_builder_.laneSection_addPredecessor(lane_section.get(), succ->sections().back());
@@ -260,11 +261,14 @@ void OpenDriveParser::laneConnections(std::shared_ptr<LaneSection> lane_section,
          odrLane = odrLane->NextSiblingElement("lane")) {
         if (!strcmp(odrLane->Attribute("type"), "driving")) {  // TODO only driving Lanes
             auto lane = lane_section->lane(odrLane->UnsignedAttribute("id"));
-
+            // auto road = map_builder_.getRoad(lane_section->road()->id());
+            auto road = lane_section->road();
+            auto road_id = lane_section->road()->id();
             auto link = odrLane->FirstChildElement("link");
             if (link) {
                 auto odr_predecessor = link->FirstChildElement("predecessor");
                 if (odr_predecessor) {
+                    int id = odr_predecessor->IntAttribute("id");
                     // find predecessor
                     auto lane_section_predecessors = lane_section->predecessors();
                     for (auto elem : lane_section_predecessors) {
@@ -274,7 +278,25 @@ void OpenDriveParser::laneConnections(std::shared_ptr<LaneSection> lane_section,
                     // predecessor is a junction
                     auto lane_section_predecessors = lane_section->predecessors();
                     for (auto elem : lane_section_predecessors) {
-                        map_builder_.lane_addPredecessor(lane.get(), elem->lanes().at(0));
+                        // find the junction it belongs to
+                        // auto junction = elem->road()->junction();
+                        auto junction = map_builder_.getJunction(elem->road()->junction());
+
+                        if (junction) {
+                            // check if lane links contain current lane
+                            for (auto conn : junction->connections()) {
+                                if ((conn->incomingRoad() == lane_section->road()->id()) &&
+                                    (conn->connectingRoad() == elem->road()->id())) {
+                                    auto lls = conn->lane_links_;
+                                    std::vector<LaneLink> res;
+                                    std::copy_if(
+                                        lls.begin(), lls.end(), std::back_inserter(res),
+                                        [lane](const LaneLink& ll) { return ll.from_ == lane->id(); });
+                                    for (auto link : res)
+                                        map_builder_.lane_addPredecessor(lane.get(), elem->lane(link.to_));
+                                }
+                            }
+                        }
                     }
                 }
                 auto odr_successor = link->FirstChildElement("successor");
@@ -284,21 +306,72 @@ void OpenDriveParser::laneConnections(std::shared_ptr<LaneSection> lane_section,
                         map_builder_.lane_addSuccessor(lane.get(), elem->lane(odr_successor->IntAttribute("id")));
                     }
                 } else {
-                    // predecessor is a junction
+                    // check if predecessor is a junction
                     auto lane_section_successors = lane_section->successors();
-
                     for (auto elem : lane_section_successors) {
-                        map_builder_.lane_addSuccessor(lane.get(), elem->lanes().at(0));
+                        // find the junction it belongs to
+                        // auto junction = elem->road()->junction();
+                        auto junction = map_builder_.getJunction(elem->road()->junction());
+                        // check if lane links contain current lane i
+                        if (junction) {
+                            for (auto conn : junction->connections()) {
+                                if ((conn->incomingRoad() == lane_section->road()->id()) &&
+                                    (conn->connectingRoad() == elem->road()->id())) {
+                                    auto lls = conn->lane_links_;
+                                    std::vector<LaneLink> res;
+                                    std::copy_if(
+                                        lls.begin(), lls.end(), std::back_inserter(res),
+                                        [lane](const LaneLink& ll) { return ll.from_ == lane->id(); });
+                                    for (auto link : res)
+                                        map_builder_.lane_addSuccessor(lane.get(), elem->lane(link.to_));
+                                }
+                            }
+                        }
                     }
                 }
             } else {
+                // no link for lane
                 auto lane_section_predecessors = lane_section->predecessors();
                 for (auto elem : lane_section_predecessors) {
-                    map_builder_.lane_addPredecessor(lane.get(), elem->lanes().front());
+                    // find the junction it belongs to
+                    // auto junction = elem->road()->junction();
+
+                    auto junction = map_builder_.getJunction(elem->road()->junction());
+                    // check if lane links contain current lane
+                    if (junction) {
+                        for (auto conn : junction->connections()) {
+                            if ((conn->incomingRoad() == lane_section->road()->id()) &&
+                                (conn->connectingRoad() == elem->road()->id())) {
+                                auto lls = conn->lane_links_;
+                                std::vector<LaneLink> res;
+                                std::copy_if(
+                                    lls.begin(), lls.end(), std::back_inserter(res),
+                                    [lane](const LaneLink& ll) { return ll.from_ == lane->id(); });
+                                for (auto link : res)
+                                    map_builder_.lane_addPredecessor(lane.get(), elem->lane(link.to_));
+                            }
+                        }
+                    }
                 }
                 auto lane_section_successors = lane_section->successors();
                 for (auto elem : lane_section_successors) {
-                    map_builder_.lane_addSuccessor(lane.get(), elem->lanes().front());
+                    // find the junction it belongs to
+                    // auto junction = elem->road()->junction();
+                    auto junction = map_builder_.getJunction(elem->road()->junction());
+                    // check if lane links contain current lane i
+                    if (junction) {
+                        for (auto conn : junction->connections()) {
+                            if ((conn->incomingRoad() == lane_section->road()->id()) &&
+                                (conn->connectingRoad() == elem->road()->id())) {
+                                auto lls = conn->lane_links_;
+                                std::vector<LaneLink> res;
+                                std::copy_if(
+                                    lls.begin(), lls.end(), std::back_inserter(res),
+                                    [lane](const LaneLink& ll) { return ll.from_ == lane->id(); });
+                                for (auto link : res) map_builder_.lane_addSuccessor(lane.get(), elem->lane(link.to_));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -412,7 +485,10 @@ LaneType OpenDriveParser::parseLaneType(const char* lt) {
     if (!strcmp(lt, "sidewalk")) return LaneType::sidewalk;
     if (!strcmp(lt, "shoulder")) return LaneType::shoulder;
     if (!strcmp(lt, "driving")) return LaneType::driving;
+    if (!strcmp(lt, "restricted")) return LaneType::restricted;
+    if (!strcmp(lt, "median")) return LaneType::median;
+    if (!strcmp(lt, "parking")) return LaneType::parking;
     if (!strcmp(lt, "none")) return LaneType::none;
-    throw std::runtime_error("unknown lane type");
+    throw std::logic_error("unknown lane type " + std::string(lt));
 }
 }  // namespace parser

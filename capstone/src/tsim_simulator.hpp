@@ -5,7 +5,8 @@
 #include <vector>
 
 // #include "renderer.hpp"
-#include "tsim_graphics.hpp"
+#include "renderer_sfml.hpp"
+// #include "tsim_graphics.hpp"
 
 namespace tsim {
 class Map;
@@ -28,7 +29,8 @@ class Simulator : std::enable_shared_from_this<Simulator> {
 
    private:
     std::shared_ptr<Map> map_;
-    MapsRenderer renderer_;
+    // MapsRenderer renderer_;
+    Renderer renderer_;
     // Renderer renderer_;
 
     std::vector<std::shared_ptr<TrafficObject>> objects_;

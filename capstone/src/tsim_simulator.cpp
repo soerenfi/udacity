@@ -10,7 +10,7 @@ void Simulator::run() {
     for (auto const& obj : objects_) {
         obj->simulate();
     }
-    renderer_.display();
+    renderer_.render();
 }
 void Simulator::addThread(std::thread&& thread) { threads_.emplace_back(std::move(thread)); }
 void Simulator::addVehicle() { objects_.emplace_back(std::make_shared<Vehicle>(map_, this)); }

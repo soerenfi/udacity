@@ -3,6 +3,8 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <thread>
 
 #include "tsim_map.hpp"
@@ -10,6 +12,8 @@ namespace tsim {
 
 std::shared_ptr<Lane> LaneSection::lane(int id) const {
     auto it = std::find_if(lanes_.begin(), lanes_.end(), [id](std::shared_ptr<Lane> lane) { return lane->id() == id; });
+    if (it == lanes_.end())
+        throw std::logic_error("lane " + std::to_string(id) + "not found in Road " + std::to_string(this->road_->id()));
     return *it;
 }
 std::shared_ptr<Lane> Road::getFirstLane() {

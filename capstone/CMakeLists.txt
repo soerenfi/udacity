@@ -25,17 +25,24 @@ set(IO2D_WITHOUT_TESTS 1)
 add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/io2d)
 
+
+set(SFML_DIR thirdparty/sfml/lib/cmake/SFML)
+
+find_package(SFML 2.5 COMPONENTS graphics audio REQUIRED)
+
 # Add project executable
 add_executable(${PROJECT_NAME}
  src/main.cpp
 src/tsim_map.cpp
 src/tsim_object.cpp
 src/opendrive_parser.cpp
-src/tsim_graphics.cpp
+# src/tsim_graphics.cpp
 src/tsim_simulator.cpp
 src/tsim_map_builder.cpp
-src/renderer.cpp
+#src/renderer.cpp
+src/renderer_sfml.cpp
 )
+
 
 # Add project executable
 string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
@@ -43,6 +50,7 @@ string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
 target_link_libraries(${PROJECT_NAME}
     PUBLIC io2d
     ${SDL2_LIBRARIES}
+    sfml-graphics
   pthread  tinyxml2)
   
   target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_GFX_INCLUDE_DIRS})

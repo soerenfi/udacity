@@ -1,7 +1,6 @@
 #include <iostream>
 #include <thread>
 
-#include "tsim_graphics.hpp"
 #include "tsim_map.hpp"
 #include "tsim_object.hpp"
 
@@ -41,13 +40,13 @@ void Vehicle::drive() {
 
         else {
             // end of road reached
-            std::vector<std::shared_ptr<Road>> next_roads;
+            // std::vector<std::shared_ptr<Road>> next_roads;
             std::vector<std::shared_ptr<Lane>> next_lanes;
             if (current_lane_->id() < 0) {
-                next_roads = current_road_->successors();
+                // next_roads = current_road_->successors();
                 next_lanes = current_lane_->successors();
             } else {
-                next_roads = current_road_->predecessors();
+                // next_roads = current_road_->predecessors();
                 next_lanes = current_lane_->predecessors();
             }
             // pick random road to continue driving

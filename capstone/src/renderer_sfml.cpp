@@ -1,48 +1,25 @@
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_render.h>
-
+#include <chrono>
 #include <iostream>
-#include <string>
+#include <thread>
 
-#include "renderer.hpp"
-#include "tsim_graphics.hpp"
+#include "renderer_sfml.hpp"
+#include "tsim_object.hpp"
 #include "tsim_simulator.hpp"
 
 Renderer::Renderer(tsim::Simulator* sim) : simulator_(sim) {
-    // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL could not initialize.\n";
-        std::cerr << "SDL_Error: " << SDL_GetError() << "\n";
-    }
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 16;
 
-    // Create Window
-    sdl_window = SDL_CreateWindow(
-        "Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screen_width, screen_height, SDL_WINDOW_SHOWN);
-
-    if (nullptr == sdl_window) {
-        std::cerr << "Window could not be created.\n";
-        std::cerr << " SDL_Error: " << SDL_GetError() << "\n";
-    }
-
-    // Create renderer
-    sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED);
-    if (nullptr == sdl_renderer) {
-        std::cerr << "Renderer could not be created.\n";
-        std::cerr << "SDL_Error: " << SDL_GetError() << "\n";
-    }
-    findMaxMinValues();
-    SDL_Point ViewPointOffset;
-
-    SDL_RenderSetLogicalSize(sdl_renderer, (max_x - min_x) * 10, (max_y - min_y) * 10);
-    // SDL_RenderSetScale(sdl_renderer, (max_x - min_x), (max_y - min_y));
-    SDL_RenderSetScale(sdl_renderer, 1, 1);
-
+    window_ = std::make_unique<sf::RenderWindow>(sf::VideoMode(1600, 900), "TrafficSim", sf::Style::Default, settings);
     map_ = simulator_->map();
-}
+    findMaxMinValues();
+    scale_ = std::max((max_y - min_y), (max_x - min_x)) * 1.1f;
 
-Renderer::~Renderer() {
-    SDL_DestroyWindow(sdl_window);
-    SDL_Quit();
+    sf::View view2;
+    view2.setCenter(sf::Vector2f((std::abs(max_x) - std::abs(min_x)) / 2, -(std::abs(max_y) - std::abs(min_y)) / 2));
+    view2.setSize(sf::Vector2f(scale_ * 2, scale_ * 2 / 16 * 9));
+
+    window_->setView(view2);
 }
 
 void Renderer::findMaxMinValues() {
@@ -54,92 +31,54 @@ void Renderer::findMaxMinValues() {
             if (pt.y() < min_y) min_y = pt.y();  // use std::sort?
         }
     }
-};
+}
+
 void Renderer::render() {
-    while (!close) {
-        SDL_Event event;
-
-        frame_start = SDL_GetTicks();
-
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                close = 1;
-            }
+    auto step = std::chrono::milliseconds(1000 / 60);
+    while (window_->isOpen()) {
+        auto now = std::chrono::steady_clock::now();
+        auto target = now + step;
+        sf::Event Event;
+        while (window_->pollEvent(Event)) {
+            if (Event.type == sf::Event::Closed) window_->close();
+            break;
         }
+        window_->clear(sf::Color::Black);
 
         objects_ = simulator_->objects();
 
-        // Clear screen
-        SDL_SetRenderDrawColor(sdl_renderer, 0x1E, 0x1E, 0x1E, 0xFF);
-        SDL_RenderClear(sdl_renderer);
+        drawLanes();
+        drawVehicles();
 
-        // Render food
-        // SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xCC, 0x00, 0xFF);
+        window_->display();
 
-        // block.x = 0;
-        // block.y = 1;
-        // SDL_RenderFillRect(sdl_renderer, &block);
+        std::this_thread::sleep_until(target);
+    }
+}
 
-        // Render snake's body
-        // SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-        // for (SDL_Point const& point : snake.body) {
-        //     block.x = point.x * block.w;
-        //     block.y = point.y * block.h;
-        //     SDL_RenderFillRect(sdl_renderer, &block);
-
-        // }
-
-        for (const auto& road : map_->roads()) {
-            // if (auto rep_it = m_RoadReps.find(line.type); rep_it != m_RoadReps.end()) {
-            // auto& rep = rep_it->second;
-            auto width = .5f;
-            size_t num_points = road->points().size();
-            SDL_Point points[num_points];
-            for (size_t i = 0; i < road->points().size(); ++i) {
-                points[i] = {road->points().at(i).x(), -road->points().at(i).y()};
+void Renderer::drawLanes() {
+    for (const auto& road : map_->roads()) {
+        for (const auto& section : road->sections()) {
+            for (const auto& lane : section->lanes()) {
+                sf::VertexArray lines(sf::LineStrip, lane->boundaryPoints().size());
+                std::size_t ct{0};
+                for (const auto& pt : lane->boundaryPoints()) {
+                    lines[ct].position = sf::Vector2f(pt.x(), -pt.y());
+                    ct++;
+                }
+                window_->draw(lines);
             }
-            SDL_RenderDrawPoints(sdl_renderer, points, num_points);
-        }
-
-        for (const auto object : objects_) {
-            SDL_Point points[5];
-            points[0] = {object->position().x() + 2, object->position().y() + 2};
-            points[1] = {object->position().x() + 2, object->position().y() - 2};
-            points[2] = {object->position().x() - 2, object->position().y() - 2};
-            points[3] = {object->position().x() - 2, object->position().y() + 2};
-            points[4] = {object->position().x() + 2, object->position().y() + 2};
-            SDL_RenderDrawPoints(sdl_renderer, points, 5);
-        }
-
-        // // Render snake's head
-        // block.x = static_cast<int>(snake.head_x) * block.w;
-        // block.y = static_cast<int>(snake.head_y) * block.h;
-        // if (snake.alive) {
-        //     SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x7A, 0xCC, 0xFF);
-        // } else {
-        //     SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0x00, 0x00, 0xFF);
-        // }
-        // SDL_RenderFillRect(sdl_renderer, &block);
-
-        // Update Screen
-        SDL_RenderPresent(sdl_renderer);
-
-        // Input, Update, Render - the main game loop.
-        frame_end = SDL_GetTicks();
-
-        // Keep track of how long each loop through the input/update/render cycle
-        // takes.
-        frame_count++;
-        frame_duration = frame_end - frame_start;
-
-        // If the time for this frame is too small (i.e. frame_duration is
-        // smaller than the target ms_per_frame), delay the loop to
-        // achieve the correct frame rate.
-
-        if (frame_duration < target_frame_duration) {
-            SDL_Delay(target_frame_duration - frame_duration);
         }
     }
-    SDL_DestroyWindow(sdl_window);
-    SDL_Quit();
+}
+
+void Renderer::drawVehicles() {
+    sf::RectangleShape rectangle;
+    rectangle.setSize(sf::Vector2f(1.5f, 1.5f));
+    // rectangle.setOutlineColor(sf::Color::Blue);
+    rectangle.setOutlineThickness(0);
+    for (const auto object : objects_) {
+        rectangle.setPosition(object->position().x(), -object->position().y());
+        window_->draw(rectangle);
+    }
 }
