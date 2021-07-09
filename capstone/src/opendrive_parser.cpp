@@ -4,6 +4,7 @@
 
 #include "opendrive_parser.hpp"
 #include "tsim_map.hpp"
+#include "tsim_util.hpp"
 
 using namespace tsim;
 namespace parser {
@@ -143,6 +144,8 @@ void OpenDriveParser::parseLaneSections() {
                 map_builder_.road_addLaneSection(road, odrLaneSection->DoubleAttribute("s"));
         }
     }
+
+    // laneSection connections
     for (auto* odrRoad = odr->FirstChildElement("road"); odrRoad != nullptr;
          odrRoad = odrRoad->NextSiblingElement("road")) {
         auto road = map_builder_.getRoad(odrRoad->UnsignedAttribute("id"));
@@ -153,8 +156,7 @@ void OpenDriveParser::parseLaneSections() {
         for (auto* odrLaneSection = odrLanes->FirstChildElement("laneSection"); odrLaneSection != nullptr;
              odrLaneSection = odrLaneSection->NextSiblingElement("laneSection")) {
             // populate lane section connections
-            // if (odrRoad->IntAttribute("junction") == -1) {  // wrrong
-            if (true) {
+            if (odrRoad->IntAttribute("junction") == -1) {  // TODO not according to standard
                 // road is not part of a junction. For first lane section, add last lane section of previous road as
                 // precedessor. For last lane section, add first lane section of next road as successor. Otherwise
                 // add prev/next lane section in road as successor.
@@ -382,7 +384,7 @@ void OpenDriveParser::calculateLaneBoundaryPoints(Lane* lane, const tinyxml2::XM
     auto* odrRoad = odrLane->Parent()->Parent()->Parent()->Parent();
 
     auto plan_view = odrRoad->FirstChildElement("planView");
-    auto offset = lane->width() * sgn(lane->id());
+    auto offset = lane->width() * util::sgn(lane->id());
     for (auto* geom = plan_view->FirstChildElement("geometry"); geom != nullptr;
          geom = geom->NextSiblingElement("geometry")) {
         auto s = geom->DoubleAttribute("s");
@@ -408,7 +410,7 @@ void OpenDriveParser::calculateLanePoints(Lane* lane, const tinyxml2::XMLElement
     auto* odrRoad = odrLane->Parent()->Parent()->Parent()->Parent();
 
     auto plan_view = odrRoad->FirstChildElement("planView");
-    auto offset = lane->width() * sgn(lane->id());
+    auto offset = lane->width() * util::sgn(lane->id());
     offset = offset / 2;  // half lane width for lane center
     for (auto* geom = plan_view->FirstChildElement("geometry"); geom != nullptr;
          geom = geom->NextSiblingElement("geometry")) {
@@ -463,17 +465,17 @@ std::vector<Point> OpenDriveParser::calculateArc(
     auto y_m = y + 1 / arc * std::cos(hdg);
     double road_length{0};
     double step = 0.3f;
-    double start_angle = hdg - sgn(arc) * M_PI / 2;
+    double start_angle = hdg - util::sgn(arc) * M_PI / 2;
     double end_angle = start_angle + length * arc;
 
     Point end(
-        (x_m + (1 / std::abs(arc) + sgn(arc) * -offset) * std::cos(end_angle)),
-        (y_m + (1 / std::abs(arc) + sgn(arc) * -offset) * std::sin(end_angle)));
+        (x_m + (1 / std::abs(arc) + util::sgn(arc) * -offset) * std::cos(end_angle)),
+        (y_m + (1 / std::abs(arc) + util::sgn(arc) * -offset) * std::sin(end_angle)));
 
-    for (double angle = start_angle; sgn(arc) * angle < sgn(arc) * end_angle; angle += length * arc / 20) {
+    for (double angle = start_angle; util::sgn(arc) * angle < util::sgn(arc) * end_angle; angle += length * arc / 20) {
         Point next(
-            (x_m + (1 / std::abs(arc) + sgn(arc) * -offset) * std::cos(angle)),
-            (y_m + (1 / std::abs(arc) + sgn(arc) * -offset) * std::sin(angle)));
+            (x_m + (1 / std::abs(arc) + util::sgn(arc) * -offset) * std::cos(angle)),
+            (y_m + (1 / std::abs(arc) + util::sgn(arc) * -offset) * std::sin(angle)));
         points.emplace_back(next);
     }
     points.emplace_back(end);

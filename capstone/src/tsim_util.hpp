@@ -1,6 +1,10 @@
 #ifndef __TSIM_GEOMETRIC_HPP__
 #define __TSIM_GEOMETRIC_HPP__
 
+#include <cmath>
+#include <cstdint>
+#include <limits>
+
 namespace tsim {
 class Point {
    public:
@@ -51,11 +55,16 @@ class Point {
     double y_;
     double z_;
 };
+namespace util {
 
 template <typename T>
 int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
+
+bool almostEqual(double a, double b);
+
+}  // namespace util
 
 }  // namespace tsim
 

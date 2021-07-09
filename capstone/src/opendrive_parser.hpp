@@ -4,8 +4,6 @@
 #include <tinyxml2.h>
 
 #include "tsim_map_builder.hpp"
-#include "tsim_util.hpp"
-
 namespace parser {
 class OpenDriveParser {
    public:

@@ -13,7 +13,7 @@ TrafficObject::TrafficObject(std::shared_ptr<Map> map, Simulator* sim) : map_(ma
 
 Vehicle::Vehicle(std::shared_ptr<Map> map, Simulator* sim) : TrafficObject(map, sim) {
     current_road_ = map_->getRandomRoad();
-    current_lane_ = current_road_->getLaneById(-1);
+    current_lane_ = current_road_->sections().at(0)->lane(-1);
     position_ = current_lane_->startPoint();
 }
 
@@ -21,7 +21,7 @@ void Vehicle::simulate() { simulator_->addThread(std::thread(&Vehicle::drive, th
 
 void Vehicle::drive() {
     auto lane_size = current_lane_->points().size() - 1;
-    auto step = std::chrono::milliseconds(10);
+    auto step = std::chrono::milliseconds(20);
     int lane_step = 0;
     int steps_taken{0};
     while (true) {

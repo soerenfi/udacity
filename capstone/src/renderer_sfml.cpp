@@ -3,6 +3,8 @@
 #include <thread>
 
 #include "renderer_sfml.hpp"
+//
+#include "tsim_map.hpp"
 #include "tsim_object.hpp"
 #include "tsim_simulator.hpp"
 
@@ -10,14 +12,15 @@ Renderer::Renderer(tsim::Simulator* sim) : simulator_(sim) {
     sf::ContextSettings settings;
     settings.antialiasingLevel = 16;
 
-    window_ = std::make_unique<sf::RenderWindow>(sf::VideoMode(1600, 900), "TrafficSim", sf::Style::Default, settings);
+    window_ = std::make_unique<sf::RenderWindow>(
+        sf::VideoMode(kScreenWidth, kScreenHeight), "TrafficSim", sf::Style::Default, settings);
     map_ = simulator_->map();
     findMaxMinValues();
     scale_ = std::max((max_y - min_y), (max_x - min_x)) * 1.1f;
 
     sf::View view2;
     view2.setCenter(sf::Vector2f((std::abs(max_x) - std::abs(min_x)) / 2, -(std::abs(max_y) - std::abs(min_y)) / 2));
-    view2.setSize(sf::Vector2f(scale_ * 2, scale_ * 2 / 16 * 9));
+    view2.setSize(sf::Vector2f(scale_ * kScreenWidth / kScreenHeight, scale_));
 
     window_->setView(view2);
 }
@@ -43,7 +46,7 @@ void Renderer::render() {
             if (Event.type == sf::Event::Closed) window_->close();
             break;
         }
-        window_->clear(sf::Color::Black);
+        window_->clear(background_color_);
 
         objects_ = simulator_->objects();
 
@@ -60,13 +63,15 @@ void Renderer::drawLanes() {
     for (const auto& road : map_->roads()) {
         for (const auto& section : road->sections()) {
             for (const auto& lane : section->lanes()) {
-                sf::VertexArray lines(sf::LineStrip, lane->boundaryPoints().size());
-                std::size_t ct{0};
-                for (const auto& pt : lane->boundaryPoints()) {
-                    lines[ct].position = sf::Vector2f(pt.x(), -pt.y());
-                    ct++;
+                if (lane->laneType() == tsim::LaneType::driving) {
+                    sf::VertexArray lines(sf::LineStrip, lane->boundaryPoints().size());
+                    std::size_t ct{0};
+                    for (const auto& pt : lane->boundaryPoints()) {
+                        lines[ct].position = sf::Vector2f(pt.x(), -pt.y());
+                        ct++;
+                    }
+                    window_->draw(lines);
                 }
-                window_->draw(lines);
             }
         }
     }
@@ -74,11 +79,12 @@ void Renderer::drawLanes() {
 
 void Renderer::drawVehicles() {
     sf::RectangleShape rectangle;
-    rectangle.setSize(sf::Vector2f(1.5f, 1.5f));
-    // rectangle.setOutlineColor(sf::Color::Blue);
-    rectangle.setOutlineThickness(0);
+    float size = 2.0f;
+    rectangle.setSize(sf::Vector2f(size, size));
+    // rectangle.setFillColor(sf::Color::Red);
+    // rectangle.setOutlineThickness(0);
     for (const auto object : objects_) {
-        rectangle.setPosition(object->position().x(), -object->position().y());
+        rectangle.setPosition(object->position().x() - (size / 2), -object->position().y() - (size / 2));
         window_->draw(rectangle);
     }
 }

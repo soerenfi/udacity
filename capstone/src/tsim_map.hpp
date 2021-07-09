@@ -64,6 +64,7 @@ class LaneSection {
     LaneSection operator=(LaneSection&& other) = delete;
 
     std::vector<std::shared_ptr<Lane>> lanes() const { return lanes_; }
+    double s_offset() const { return s_offset_; }
     std::shared_ptr<Lane> lane(int id) const;
     std::shared_ptr<Road> road() { return road_; };
     std::vector<std::shared_ptr<LaneSection>> predecessors() { return predecessors_; }
@@ -134,9 +135,7 @@ class Road {
     std::vector<std::shared_ptr<Road>> successors() { return successors_; };
     std::vector<std::shared_ptr<Road>> predecessors() { return predecessors_; };
     int junction() { return junction_; };
-    // std::vector<std::pair<std::shared_ptr<Road>, DrivingDirection>> findConnectingRoads(DrivingDirection direction);
     std::shared_ptr<Lane> getFirstLane();
-    std::shared_ptr<Lane> getLaneById(int id);
     std::vector<std::shared_ptr<LaneSection>> sections() const { return sections_; };  // Todo not const
     const std::vector<Point>& points() const { return road_points_; };
 
@@ -172,7 +171,8 @@ class Map {
 
    private:
     std::vector<std::shared_ptr<Road>> roads_;
-    // should I use std::vector<Road> here? --> Builder pattern not possible? or std::vector<std::unique_ptr<Road>>?
+    // should I use std::vector<Road> here? --> Builder pattern not possible? or std::vector<std::unique_ptr<Road>> +
+    // raw pointers as member map_ for road, lane?
     std::vector<std::shared_ptr<Junction>> junctions_;
 
     friend class MapBuilder;

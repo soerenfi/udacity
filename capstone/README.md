@@ -12,7 +12,7 @@ Number of traffic participants is selected by user. Each traffic Participant is 
 Prerequisites:
 
 * OpenDrive File acquired from here: https://github.com/carla-simulator/opendrive-test-files/blob/master/OpenDrive/Town01.xodr
-* io2d for graphical representation
+* sfml for graphical representation
 
 ```mkdir build```
 ```cd build```
@@ -39,5 +39,8 @@ The Project employs the "Builder Pattern" for generation of the Road Map.
 
 ## Further Work
 
+pan& zoom for larger maps
+non-constant lane offsets
 Multiple Lanes and lane changes
+mutex based intersection/traffic light handling
 Actual (e.g. PID based) lane following of traffic participants

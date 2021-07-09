@@ -4,14 +4,12 @@
 #include <thread>
 #include <vector>
 
-// #include "renderer.hpp"
 #include "renderer_sfml.hpp"
-// #include "tsim_graphics.hpp"
 
 namespace tsim {
 class Map;
 class TrafficObject;
-class Simulator : std::enable_shared_from_this<Simulator> {
+class Simulator {
    public:
     Simulator(std::shared_ptr<Map> map) : map_(map), renderer_(this){};
     ~Simulator();

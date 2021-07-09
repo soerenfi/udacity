@@ -3,13 +3,17 @@
 
 #include <vector>
 
+#include "tsim_map.hpp"
+//
 #include <SFML/Graphics.hpp>
 
-#include "tsim_graphics.hpp"
-#include "tsim_map.hpp"
+constexpr std::size_t kScreenWidth{1600};
+constexpr std::size_t kScreenHeight{900};
 
-constexpr std::size_t kScreenWidth{1920};
-constexpr std::size_t kScreenHeight{1080};
+namespace tsim {
+class Simulator;
+class TrafficObject;
+}  // namespace tsim
 
 class Renderer {
    public:
@@ -20,7 +24,6 @@ class Renderer {
 
     void drawLanes();
     void drawVehicles();
-
 
     void findMaxMinValues();
 
@@ -40,7 +43,7 @@ class Renderer {
     int frame_count = 0;
     std::size_t target_frame_duration{1000 / 60};
     int close{0};
-
+    sf::Color background_color_{74, 83, 97};
     const std::size_t screen_width{kScreenWidth};
     const std::size_t screen_height{kScreenHeight};
 };

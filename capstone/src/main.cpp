@@ -6,8 +6,8 @@
 #include "tsim_simulator.hpp"
 
 int main(int argc, char* argv[]) {
-    // std::string filename{"../xodr/Town01.xodr"};
-    std::string filename{"../xodr/TownBig.xodr"};
+    std::string filename{"../xodr/Town01.xodr"};
+    // std::string filename{"../xodr/TownBig.xodr"};
 
     std::vector<std::string> args(argv + 1, argv + argc);
     if (argc > 1) filename = args.front();
@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     auto map = parser.parse(filename);
 
     tsim::Simulator sim(map);
-    std::size_t num_vehicles = 1;
+    std::size_t num_vehicles = 10;
 
     for (std::size_t i = 0; i < num_vehicles; i++) sim.addVehicle();
 

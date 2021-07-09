@@ -1,5 +1,6 @@
 #include <memory>
 
+#include "tsim_map.hpp"
 #include "tsim_map_builder.hpp"
 
 namespace tsim {

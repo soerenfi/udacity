@@ -6,7 +6,10 @@
 #include "tsim_map.hpp"
 
 namespace tsim {
-
+class Map;
+class Road;
+class Junction;
+class LaneSection;
 class MapBuilder {
    public:
     MapBuilder() { map_ = std::make_shared<Map>(); }

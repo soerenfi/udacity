@@ -17,16 +17,10 @@ std::shared_ptr<Lane> LaneSection::lane(int id) const {
     return *it;
 }
 std::shared_ptr<Lane> Road::getFirstLane() {
-    auto lane_section = sections_.front();  // TODO multiple lane sections
+    auto lane_section = sections_.front();
     auto lanes = lane_section->lanes();
     return lanes.front();
 };
-std::shared_ptr<Lane> Road::getLaneById(int id) {
-    auto lane_section = sections_.front();  // TODO multiple lane sections
-    auto lanes = lane_section->lanes();
-    auto it = std::find_if(lanes.begin(), lanes.end(), [id](std::shared_ptr<Lane> lane) { return lane->id() == id; });
-    return *it;
-}
 
 std::shared_ptr<Road> Map::findRoadById(int id) {
     auto it = std::find_if(roads_.begin(), roads_.end(), [id](std::shared_ptr<Road> road) { return road->id() == id; });
